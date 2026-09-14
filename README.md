@@ -29,7 +29,71 @@ scripts/      — administrator yaratish skripti
 media/        — yuklangan rasmlar shu yerda saqlanadi
 ```
 
-## Mahalliy (local) ishga tushirish
+## Ishga tushirish — Docker orqali (tavsiya etiladi)
+
+Bu usul eng oson: Python, PostgreSQL o'rnatish shart emas, hammasi Docker
+ichida avtomatik ishlaydi. Kompyuterda faqat [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+o'rnatilgan bo'lishi kerak.
+
+### 1. `.env` faylini tayyorlash
+
+```bash
+cp .env.example .env
+```
+
+Xohlasangiz, `.env` faylini ochib `SECRET_KEY`, `TELEGRAM_BOT_TOKEN`,
+`TELEGRAM_CHANNEL_ID` qiymatlarini o'zgartiring (bo'lmasa ham ishlayveradi,
+standart qiymatlar bilan).
+
+### 2. Qurish va ishga tushirish
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+Bu bitta buyruq bilan **PostgreSQL** va **backend serveri** ikkisi ham
+ishga tushadi (birinchi marta bazani migratsiya qilib, keyin serverni
+ko'taradi).
+
+### 3. Tekshirish
+
+```bash
+docker compose ps          # ikkala konteyner ham "Up" bo'lishi kerak
+docker compose logs -f api # server loglarini ko'rish (Ctrl+C bilan chiqish)
+```
+
+Brauzerda oching: **http://localhost:8742/docs**
+
+### 4. To'xtatish / tozalash
+
+```bash
+docker compose down        # to'xtatish (ma'lumotlar saqlanadi)
+docker compose down -v     # to'xtatish + bazani butunlay tozalash
+```
+
+### Birinchi administratorni yaratish (Docker orqali)
+
+```bash
+docker compose exec api python -m scripts.create_admin +998901234567
+```
+
+## Railway'ga joylashtirish
+
+1. Railway'da yangi loyiha yaratib, shu repo'ni ulaymiz -- Railway avtomatik
+   ravishda ildizdagi `Dockerfile`ni topib, undan foydalanadi (`docker-compose.yml`
+   Railway'da ishlatilmaydi, chunki Railway har bir xizmatni alohida boshqaradi).
+2. Railway'dan **"Add PostgreSQL"** orqali baza xizmatini qo'shamiz -- Railway
+   avtomatik ravishda `DATABASE_URL` muhit o'zgaruvchisini beradi (kodimiz uni
+   avtomatik to'g'ri formatga o'giradi, qo'lda o'zgartirish shart emas).
+3. Backend xizmatiga quyidagi muhit o'zgaruvchilarini qo'shamiz: `SECRET_KEY`
+   (uzun, tasodifiy qiymat), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`.
+4. Railway `PORT` o'zgaruvchisini o'zi avtomatik beradi -- `Dockerfile`
+   ichidagi buyruq shuni hisobga oladi, qo'shimcha sozlash kerak emas.
+
+## Mahalliy (local, Docker'siz) ishga tushirish
+
+Agar Docker o'rnatilmagan bo'lsa, quyidagi usul bilan ham ishga tushirish mumkin:
 
 ### 1. Muhitni tayyorlash
 

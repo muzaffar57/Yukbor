@@ -6,6 +6,7 @@ Barcha qiymatlar `.env` faylidan o'qiladi. Hech qanday maxfiy ma'lumot
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -35,6 +36,19 @@ class Settings(BaseSettings):
 
     # CORS
     CORS_ALLOW_ORIGINS: list[str] = ["*"]
+
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def _normalize_database_url(cls, v: str) -> str:
+        """Railway/Heroku kabi platformalar odatda `postgres://` yoki
+        `postgresql://` formatida beradi, lekin bizga async ishlash uchun
+        `postgresql+asyncpg://` kerak. Shuni avtomatik to'g'rilaymiz --
+        deploy paytida qo'lda o'zgartirish kerak bo'lmaydi."""
+        if v.startswith("postgres://"):
+            return "postgresql+asyncpg://" + v[len("postgres://") :]
+        if v.startswith("postgresql://"):
+            return "postgresql+asyncpg://" + v[len("postgresql://") :]
+        return v
 
 
 @lru_cache

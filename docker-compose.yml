@@ -1,0 +1,49 @@
+# Lokalda butun tizimni (PostgreSQL + FastAPI backend) bir buyruq bilan
+# ishga tushirish uchun. Railway'da bu fayl ishlatilmaydi -- Railway har bir
+# xizmatni (backend + Postgres plugin) alohida boshqaradi, backend uchun
+# esa shu papkadagi `Dockerfile`dan foydalanadi.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-logistics_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-logistics_pass_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-logistics_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Diqqat: bu yerda host portini ochib qo'ymadik -- "api" konteyneri
+    # bazaga ichki Docker tarmog'i orqali ulanadi, tashqi kirish shart emas.
+    # Agar tashqaridan (masalan, DBeaver bilan) ulanish kerak bo'lsa,
+    # pastdagi qatorni izohdan chiqaring:
+    # ports:
+    #   - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-logistics_user} -d ${POSTGRES_DB:-logistics_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Diqqat: bu qiymat .env faylidagi DATABASE_URL'ni ataylab ustidan
+      # bosib yozadi, chunki konteyner ichida baza "localhost"da emas,
+      # "db" nomli xizmatda joylashgan.
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-logistics_user}:${POSTGRES_PASSWORD:-logistics_pass_dev}@db:5432/${POSTGRES_DB:-logistics_db}
+      PORT: "8000"
+    ports:
+      - "8742:8000"
+    volumes:
+      - media_data:/app/media
+
+volumes:
+  postgres_data:
+  media_data:
