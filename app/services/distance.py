@@ -36,13 +36,40 @@ REGION_COORDINATES: dict[Region, tuple[float, float]] = {
 }
 
 # Yo'lning to'g'ri chiziq bo'lmasligi uchun tuzatish koeffitsiyenti.
-ROAD_DISTANCE_FACTOR = 1.2
+#
+# O'zbekiston relyefi bir xil emas: masalan Toshkentdan Farg'ona vodiysiga
+# (Andijon, Farg'ona, Namangan) borish uchun Qamchiq dovoni orqali katta
+# aylanma yo'l bosiladi (haqiqiy yo'l ~350-367 km, to'g'ri chiziq esa ~270 km
+# -- ya'ni haqiqiy/to'g'ri-chiziq nisbati ~1.3-1.4). Xuddi shunday, Surxondaryo
+# ham tog' tizmasi orqasida joylashgan. Shu sababli bu hududlar uchun kattaroq
+# tuzatish koeffitsiyenti qo'llaniladi, qolganlari uchun -- kichikroq.
+STANDARD_ROAD_FACTOR = 1.15
+MOUNTAIN_CROSSING_ROAD_FACTOR = 1.35
+WITHIN_VALLEY_ROAD_FACTOR = 1.1
+
+# Tog' tizmalari orqasida joylashgan, boshqa hududlarga faqat dovon orqali
+# ulanadigan hududlar.
+MOUNTAIN_ISOLATED_REGIONS: frozenset[Region] = frozenset(
+    {Region.ANDIJON, Region.FARGONA, Region.NAMANGAN, Region.SURXONDARYO}
+)
+# Farg'ona vodiysi ichida (bu 3 hudud o'zaro) yo'llar tekislikda, aylanma kam.
+FERGANA_VALLEY_REGIONS: frozenset[Region] = frozenset(
+    {Region.ANDIJON, Region.FARGONA, Region.NAMANGAN}
+)
 
 # Agar ortish va tushirish bir xil viloyatda bo'lsa, o'rtacha shahar/tuman
 # ichi masofa sifatida ishlatiladigan taxminiy qiymat.
 INTRA_REGION_DISTANCE_KM = 50.0
 
 EARTH_RADIUS_KM = 6371.0
+
+
+def _road_distance_factor(region_a: Region, region_b: Region) -> float:
+    if region_a in FERGANA_VALLEY_REGIONS and region_b in FERGANA_VALLEY_REGIONS:
+        return WITHIN_VALLEY_ROAD_FACTOR
+    if region_a in MOUNTAIN_ISOLATED_REGIONS or region_b in MOUNTAIN_ISOLATED_REGIONS:
+        return MOUNTAIN_CROSSING_ROAD_FACTOR
+    return STANDARD_ROAD_FACTOR
 
 
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -65,4 +92,5 @@ def estimate_distance_km(loading_region: Region, unloading_region: Region) -> fl
     lat1, lon1 = REGION_COORDINATES[loading_region]
     lat2, lon2 = REGION_COORDINATES[unloading_region]
     straight_line_km = _haversine_km(lat1, lon1, lat2, lon2)
-    return round(straight_line_km * ROAD_DISTANCE_FACTOR, 1)
+    factor = _road_distance_factor(loading_region, unloading_region)
+    return round(straight_line_km * factor, 1)
