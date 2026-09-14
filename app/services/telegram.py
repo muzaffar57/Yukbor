@@ -11,7 +11,8 @@ from aiogram.exceptions import TelegramAPIError
 
 from app.core.config import settings
 from app.models.cargo import Cargo
-from app.models.enums import PaymentType, VehicleType
+from app.models.driver_offer import DriverOffer
+from app.models.enums import LoadType, PaymentType, VehicleType
 
 logger = logging.getLogger("telegram_service")
 
@@ -23,6 +24,11 @@ VEHICLE_TYPE_LABELS: dict[VehicleType, str] = {
     VehicleType.ISUZU: "Isuzu",
     VehicleType.LABO_CHANGAN: "Labo/Changan",
     VehicleType.BOSHQA: "Boshqa",
+}
+
+LOAD_TYPE_LABELS: dict[LoadType, str] = {
+    LoadType.TOLIQ_MASHINA: "To'liq mashina",
+    LoadType.QISMAN_YUK: "Qisman/lahtak yuk (bo'lishish mumkin)",
 }
 
 PAYMENT_TYPE_LABELS: dict[PaymentType, str] = {
@@ -66,6 +72,7 @@ def build_cargo_message(cargo: Cargo) -> str:
     if cargo.volume:
         lines.append(f"📐 Hajmi: {cargo.volume} m³")
     lines.append(f"🚛 Mashina turi: {VEHICLE_TYPE_LABELS.get(cargo.vehicle_type, cargo.vehicle_type)}")
+    lines.append(f"📦 Yuk turi: {LOAD_TYPE_LABELS.get(cargo.load_type, cargo.load_type)}")
     lines.append("")
 
     loading_line = f"📍 Ortish: {_region_label(cargo.loading_region)}"
@@ -101,6 +108,81 @@ def build_cargo_message(cargo: Cargo) -> str:
 
 async def post_cargo_to_channel(cargo: Cargo) -> None:
     message_text = build_cargo_message(cargo)
+
+    if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHANNEL_ID:
+        logger.info("[TELEGRAM MOCK] Bot token/kanal sozlanmagan. Yuborilishi kerak bo'lgan xabar:\n%s", message_text)
+        return
+
+    try:
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        try:
+            await bot.send_message(
+                chat_id=settings.TELEGRAM_CHANNEL_ID,
+                text=message_text,
+                parse_mode="HTML",
+            )
+        finally:
+            await bot.session.close()
+    except TelegramAPIError:
+        logger.exception("Telegram kanalga post yuborishda xatolik yuz berdi")
+    except Exception:  # noqa: BLE001
+        logger.exception("Telegram xizmatida kutilmagan xatolik")
+
+
+def build_driver_offer_message(offer: DriverOffer) -> str:
+    lines = ["🚛 <b>BO'SH TRANSPORT (LAHTAK)</b>", ""]
+
+    if offer.description:
+        lines.append(f"📝 {offer.description}")
+
+    lines.append(f"🚚 Mashina turi: {VEHICLE_TYPE_LABELS.get(offer.vehicle_type, offer.vehicle_type)}")
+    lines.append(f"📦 Qabul qiladi: {LOAD_TYPE_LABELS.get(offer.load_type, offer.load_type)}")
+    if offer.available_weight:
+        lines.append(f"⚖️ Bo'sh joy (og'irlik): {offer.available_weight} kg")
+    if offer.available_volume:
+        lines.append(f"📐 Bo'sh joy (hajm): {offer.available_volume} m³")
+    lines.append("")
+
+    departure_line = f"📍 Jo'nash: {_region_label(offer.departure_region)}"
+    if offer.departure_district:
+        departure_line += f", {offer.departure_district}"
+    if offer.departure_landmark:
+        departure_line += f" ({offer.departure_landmark})"
+    lines.append(departure_line)
+
+    if offer.destination_region:
+        destination_line = f"🏁 Yo'nalish: {_region_label(offer.destination_region)}"
+        if offer.destination_district:
+            destination_line += f", {offer.destination_district}"
+        if offer.destination_landmark:
+            destination_line += f" ({offer.destination_landmark})"
+        lines.append(destination_line)
+        if offer.distance_km:
+            lines.append(f"🛣 Taxminiy masofa: ~{offer.distance_km} km")
+    else:
+        lines.append("🏁 Yo'nalish: Istalgan yo'nalish / Kelishuv bo'yicha")
+
+    if offer.departure_lat is not None and offer.departure_lon is not None:
+        lines.append(f"🗺 Xarita (jo'nash joyi): {_yandex_maps_link(offer.departure_lat, offer.departure_lon)}")
+
+    lines.append("")
+    lines.append(f"📅 Jo'nash sanasi: {offer.departure_date.strftime('%d.%m.%Y %H:%M')}")
+
+    if offer.price_expectation:
+        payment_label = PAYMENT_TYPE_LABELS.get(offer.payment_type, offer.payment_type) if offer.payment_type else ""
+        lines.append(f"💰 Narx taklifi: {offer.price_expectation:,.0f} so'm" + (f" ({payment_label})" if payment_label else ""))
+    else:
+        lines.append("💰 Narx: Kelishuv bo'yicha")
+
+    lines.append("")
+    lines.append(f"👤 {offer.driver.full_name}")
+    lines.append(f"📞 {offer.driver.phone_number}")
+
+    return "\n".join(lines)
+
+
+async def post_driver_offer_to_channel(offer: DriverOffer) -> None:
+    message_text = build_driver_offer_message(offer)
 
     if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHANNEL_ID:
         logger.info("[TELEGRAM MOCK] Bot token/kanal sozlanmagan. Yuborilishi kerak bo'lgan xabar:\n%s", message_text)

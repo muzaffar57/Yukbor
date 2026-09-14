@@ -93,8 +93,28 @@ python -m scripts.create_admin +998901234567
 | GET | `/api/v1/cargos/{id}` | Bitta yuk tafsiloti |
 | PATCH | `/api/v1/cargos/{id}/status` | Status o'zgartirish (faqat egasi) |
 | POST | `/api/v1/cargos/{id}/photos` | Yukka rasm biriktirish (faqat egasi) |
+| POST | `/api/v1/driver-offers/` | Bo'sh transport e'loni yaratish + Telegram post (faqat driver) |
+| GET | `/api/v1/driver-offers/` | Bo'sh transportlar ro'yxati (filtr + sahifalash) |
+| GET | `/api/v1/driver-offers/{id}` | Bitta e'lon tafsiloti |
+| PATCH | `/api/v1/driver-offers/{id}/status` | E'lon statusini o'zgartirish (faqat egasi) |
 | POST | `/api/v1/admin/users/{id}/subscription/extend` | Obunani uzaytirish (faqat admin) |
 | GET | `/health` | Server holatini tekshirish |
+
+## "Lahtak/qisman yuk" va "Bo'sh transport" tizimi
+
+Real logistikada ko'p uchraydigan holat: haydovchining mashinasida bo'sh joy
+bor va u boshqa (kichik/qisman) yuklarni ham qo'shib olishni xohlaydi.
+Buning uchun ikki tomonlama funksiya qo'shildi:
+
+- **`Cargo.load_type`** — yuk beruvchi o'z yukini `toliq_mashina` (butun
+  mashina kerak) yoki `qisman_yuk`/lahtak (boshqa yuk bilan bo'lishish
+  mumkin) deb belgilaydi.
+- **`DriverOffer`** — haydovchi o'zi "bo'sh transport" e'lon qiladi: qayerdan
+  qayerga ketayotgani (manzil ixtiyoriy — bo'sh qoldirilsa "istalgan
+  yo'nalish" degani), mashinasida qancha bo'sh joy (kg/m3) borligi, qachon
+  jo'nayotgani. Bu e'lon ham avtomatik Telegram kanalga
+  "🚛 BO'SH TRANSPORT (LAHTAK)" belgisi bilan post qilinadi. Yuk beruvchilar
+  shu ro'yxatni ko'rib, o'ziga mos haydovchini topadi.
 
 ## Muhim texnik qarorlar
 

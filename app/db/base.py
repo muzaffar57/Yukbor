@@ -8,5 +8,6 @@ from app.db.base_class import Base
 from app.models.user import User  # noqa: F401
 from app.models.cargo import Cargo  # noqa: F401
 from app.models.cargo_photo import CargoPhoto  # noqa: F401
+from app.models.driver_offer import DriverOffer  # noqa: F401
 
-__all__ = ["Base", "User", "Cargo", "CargoPhoto"]
+__all__ = ["Base", "User", "Cargo", "CargoPhoto", "DriverOffer"]

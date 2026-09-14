@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.models.enums import CargoStatus, PaymentType, Region, VehicleType
+from app.models.enums import CargoStatus, LoadType, PaymentType, Region, VehicleType
 
 
 class CargoCreate(BaseModel):
@@ -23,6 +23,10 @@ class CargoCreate(BaseModel):
     unloading_landmark: str | None = Field(default=None, max_length=500)
 
     vehicle_type: VehicleType
+    load_type: LoadType = Field(
+        default=LoadType.TOLIQ_MASHINA,
+        description="To'liq mashina kerakmi, yoki qisman/lahtak joy yetarli",
+    )
     price: float = Field(gt=0)
     payment_type: PaymentType
     loading_date: date | None = None
@@ -78,6 +82,7 @@ class CargoOut(BaseModel):
     distance_km: float | None
 
     vehicle_type: VehicleType
+    load_type: LoadType
     price: float
     payment_type: PaymentType
     loading_date: date | None

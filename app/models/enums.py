@@ -49,3 +49,10 @@ class CargoStatus(str, enum.Enum):
     ACTIVE = "active"
     COMPLETED = "completed"
     CANCELED = "canceled"
+
+
+class LoadType(str, enum.Enum):
+    """Yuk butun mashinani band qiladimi, yoki qisman (lahtak) joy yetarlimi."""
+
+    TOLIQ_MASHINA = "toliq_mashina"
+    QISMAN_YUK = "qisman_yuk"  # lahtak -- boshqa yuk bilan birga ketishi mumkin

@@ -14,7 +14,7 @@ from app.crud.cargo import (
     update_cargo_status,
 )
 from app.db.session import get_db
-from app.models.enums import CargoStatus, Region, VehicleType
+from app.models.enums import CargoStatus, LoadType, Region, VehicleType
 from app.models.user import User
 from app.schemas.cargo import CargoCreate, CargoListOut, CargoOut, CargoPhotoOut, CargoStatusUpdate
 from app.services.telegram import post_cargo_to_channel
@@ -50,6 +50,7 @@ async def list_cargos_endpoint(
     loading_region: Region | None = None,
     unloading_region: Region | None = None,
     vehicle_type: VehicleType | None = None,
+    load_type: LoadType | None = None,
     min_volume: float | None = Query(default=None, ge=0),
     max_volume: float | None = Query(default=None, ge=0),
     status_filter: CargoStatus | None = Query(default=CargoStatus.ACTIVE, alias="status"),
@@ -61,6 +62,7 @@ async def list_cargos_endpoint(
         loading_region=loading_region,
         unloading_region=unloading_region,
         vehicle_type=vehicle_type,
+        load_type=load_type,
         min_volume=min_volume,
         max_volume=max_volume,
         status=status_filter,

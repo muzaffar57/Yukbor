@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.cargo import Cargo
 from app.models.cargo_photo import CargoPhoto
-from app.models.enums import CargoStatus, Region, VehicleType
+from app.models.enums import CargoStatus, LoadType, Region, VehicleType
 from app.models.user import User
 from app.schemas.cargo import CargoCreate
 from app.services.distance import estimate_distance_km
@@ -28,6 +28,7 @@ async def create_cargo(db: AsyncSession, data: CargoCreate, owner: User) -> Carg
         unloading_landmark=data.unloading_landmark,
         distance_km=distance_km,
         vehicle_type=data.vehicle_type,
+        load_type=data.load_type,
         price=data.price,
         payment_type=data.payment_type,
         loading_date=data.loading_date,
@@ -55,6 +56,7 @@ async def list_cargos(
     loading_region: Region | None = None,
     unloading_region: Region | None = None,
     vehicle_type: VehicleType | None = None,
+    load_type: LoadType | None = None,
     min_volume: float | None = None,
     max_volume: float | None = None,
     status: CargoStatus = CargoStatus.ACTIVE,
@@ -73,6 +75,8 @@ async def list_cargos(
         filters.append(Cargo.unloading_region == unloading_region)
     if vehicle_type is not None:
         filters.append(Cargo.vehicle_type == vehicle_type)
+    if load_type is not None:
+        filters.append(Cargo.load_type == load_type)
     if min_volume is not None:
         filters.append(Cargo.volume >= min_volume)
     if max_volume is not None:

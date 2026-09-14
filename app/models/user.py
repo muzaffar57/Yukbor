@@ -34,3 +34,4 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     cargos: Mapped[list["Cargo"]] = relationship(back_populates="owner")  # noqa: F821
+    driver_offers: Mapped[list["DriverOffer"]] = relationship(back_populates="driver")  # noqa: F821

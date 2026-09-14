@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.db.base_class import Base
-from app.models.enums import CargoStatus, PaymentType, Region, VehicleType
+from app.models.enums import CargoStatus, LoadType, PaymentType, Region, VehicleType
 
 
 class Cargo(Base):
@@ -36,6 +36,11 @@ class Cargo(Base):
     distance_km: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     vehicle_type: Mapped[VehicleType] = mapped_column(String(20), nullable=False, index=True)
+    # To'liq mashina kerakmi, yoki qisman/lahtak joy yetarlimi (boshqa yuk
+    # bilan birga ketishi mumkin).
+    load_type: Mapped[LoadType] = mapped_column(
+        String(20), nullable=False, index=True, server_default=LoadType.TOLIQ_MASHINA.value
+    )
     price: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     payment_type: Mapped[PaymentType] = mapped_column(String(20), nullable=False)
 
