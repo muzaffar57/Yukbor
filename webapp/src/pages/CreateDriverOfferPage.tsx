@@ -36,8 +36,6 @@ export function CreateDriverOfferPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = departureRegion !== "" && vehicleType !== "" && departureDate.length > 0;
-
   function handleLocate() {
     if (!navigator.geolocation) {
       showAlert("Bu qurilmada joylashuvni aniqlash imkoni yo'q.");
@@ -59,7 +57,14 @@ export function CreateDriverOfferPage() {
   }
 
   async function handleSubmit() {
-    if (!canSubmit || submitting) return;
+    if (!departureRegion || !vehicleType || !departureDate) {
+      const message = "Jo'nash viloyati, mashina turi va jo'nash sanasini to'ldiring.";
+      setError(message);
+      hapticNotify("error");
+      await showAlert(message);
+      return;
+    }
+    if (submitting) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -93,16 +98,16 @@ export function CreateDriverOfferPage() {
   }
 
   useMainButton({
-    text: "🚛 E'lonni joylashtirish",
+    text: "E'lonni joylashtirish",
     onClick: handleSubmit,
-    enabled: canSubmit && !submitting,
+    enabled: !submitting,
     loading: submitting,
   });
 
   return (
     <div>
       <BrandHeader showBack />
-      <div className="flex flex-col gap-4 p-4 pb-24">
+      <div className="flex flex-col gap-4 p-4 pb-36">
         <div
           className="rounded-xl px-3.5 py-2.5 text-[12px]"
           style={{ background: "rgba(36,129,204,0.1)", color: "#1d4ed8" }}
@@ -229,7 +234,7 @@ export function CreateDriverOfferPage() {
 
         <button
           type="button"
-          disabled={!canSubmit || submitting}
+          disabled={submitting}
           onClick={handleSubmit}
           className="rounded-xl px-4 py-3 text-[15px] font-semibold disabled:opacity-40"
           style={{ background: "var(--tg-button)", color: "var(--tg-button-text)" }}

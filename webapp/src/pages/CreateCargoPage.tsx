@@ -7,7 +7,7 @@ import { REGION_LABELS, VEHICLE_TYPE_LABELS, LOAD_TYPE_LABELS, PAYMENT_TYPE_LABE
 import type { Region, VehicleType, LoadType, PaymentType } from "../types";
 import { useBackButton, useMainButton } from "../lib/hooks";
 import { hapticNotify, showAlert } from "../lib/telegram";
-import { tonsToKg } from "../lib/format";
+import { parseNumber, tonsToKg } from "../lib/format";
 
 export function CreateCargoPage() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export function CreateCargoPage() {
   const [vehicleType, setVehicleType] = useState<VehicleType | "">("");
   const [loadType, setLoadType] = useState<LoadType>("toliq_mashina");
   const [price, setPrice] = useState("");
-  const [paymentType, setPaymentType] = useState<PaymentType | "">("");
+  const [paymentType, setPaymentType] = useState<PaymentType | "">("naqd");
   const [loadingDate, setLoadingDate] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -34,14 +34,21 @@ export function CreateCargoPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit =
-    title.trim().length >= 2 &&
-    Number(weight) > 0 &&
-    loadingRegion !== "" &&
-    unloadingRegion !== "" &&
-    vehicleType !== "" &&
-    Number(price) > 0 &&
-    paymentType !== "";
+  const weightTons = parseNumber(weight);
+  const priceValue = parseNumber(price);
+  const volumeValue = parseNumber(volume);
+
+  function missingFields(): string[] {
+    const missing: string[] = [];
+    if (title.trim().length < 2) missing.push("yuk nomi");
+    if (weightTons === null || weightTons <= 0) missing.push("og'irligi (tonna)");
+    if (!loadingRegion) missing.push("ortish viloyati");
+    if (!unloadingRegion) missing.push("tushirish viloyati");
+    if (!vehicleType) missing.push("mashina turi");
+    if (priceValue === null || priceValue <= 0) missing.push("narx");
+    if (!paymentType) missing.push("to'lov turi");
+    return missing;
+  }
 
   function handleLocate() {
     if (!navigator.geolocation) {
@@ -64,15 +71,23 @@ export function CreateCargoPage() {
   }
 
   async function handleSubmit() {
-    if (!canSubmit || submitting) return;
+    if (submitting) return;
+    const missing = missingFields();
+    if (missing.length > 0) {
+      const message = "To'ldiring: " + missing.join(", ");
+      setError(message);
+      hapticNotify("error");
+      await showAlert(message);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       const cargo = await createCargo({
         title: title.trim(),
         description: description.trim() || null,
-        weight: tonsToKg(Number(weight)),
-        volume: volume ? Number(volume) : null,
+        weight: tonsToKg(weightTons as number),
+        volume: volumeValue !== null && volumeValue > 0 ? volumeValue : null,
         loading_region: loadingRegion as Region,
         loading_district: loadingDistrict.trim() || null,
         loading_landmark: loadingLandmark.trim() || null,
@@ -83,7 +98,7 @@ export function CreateCargoPage() {
         unloading_landmark: unloadingLandmark.trim() || null,
         vehicle_type: vehicleType as VehicleType,
         load_type: loadType,
-        price: Number(price),
+        price: priceValue as number,
         payment_type: paymentType as PaymentType,
         loading_date: loadingDate || null,
       });
@@ -108,14 +123,14 @@ export function CreateCargoPage() {
   useMainButton({
     text: "E'lonni joylashtirish",
     onClick: handleSubmit,
-    enabled: canSubmit && !submitting,
+    enabled: !submitting,
     loading: submitting,
   });
 
   return (
     <div>
       <BrandHeader showBack />
-      <div className="flex flex-col gap-4 px-4 pb-24">
+      <div className="flex flex-col gap-4 px-4 pb-36">
         <div>
           <h2 className="text-[18px] font-extrabold">Yangi yuk e'loni</h2>
           <p className="text-[13px]" style={{ color: "var(--tg-hint)" }}>
@@ -257,7 +272,7 @@ export function CreateCargoPage() {
 
         <button
           type="button"
-          disabled={!canSubmit || submitting}
+          disabled={submitting}
           onClick={handleSubmit}
           className="rounded-2xl px-4 py-3.5 text-[15px] font-bold text-white disabled:opacity-40"
           style={{ background: "var(--yb-green)" }}

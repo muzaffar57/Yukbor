@@ -6,6 +6,13 @@ export function kgToTons(kg: number): number {
   return kg / 1000;
 }
 
+export function parseNumber(raw: string): number | null {
+  const normalized = raw.trim().replace(/\s/g, "").replace(",", ".");
+  if (!normalized) return null;
+  const value = Number(normalized);
+  return Number.isFinite(value) ? value : null;
+}
+
 export function tonsToKg(tons: number): number {
   return Math.round(tons * 1000 * 1000) / 1000;
 }
