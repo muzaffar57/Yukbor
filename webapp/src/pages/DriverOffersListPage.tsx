@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header } from "../components/Header";
+import { BrandHeader } from "../components/Header";
 import { DriverOfferCard } from "../components/DriverOfferCard";
 import { RouteFilters } from "../components/RouteFilters";
 import { FullPageSpinner } from "../components/Spinner";
@@ -38,10 +38,10 @@ export function DriverOffersListPage() {
 
   return (
     <div>
-      <Header title="Bo'sh transport" />
+      <BrandHeader />
       <RouteFilters
-        fromLabel="Qayerdan (jo'nash)"
-        toLabel="Qayerga (borish)"
+        fromLabel="Qayerdan"
+        toLabel="Qayerga"
         fromValue={filters.departure_region}
         toValue={filters.destination_region}
         vehicleType={filters.vehicle_type}
@@ -80,11 +80,11 @@ export function DriverOffersListPage() {
       {user?.role === "driver" && (
         <button
           onClick={() => navigate("/offers/new")}
-          className="fixed bottom-20 right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full text-2xl shadow-lg"
+          className="fixed bottom-20 right-4 z-20 flex h-14 items-center gap-1 rounded-full px-4 text-[13px] font-bold text-white shadow-lg"
           style={{ background: "var(--tg-button)", color: "var(--tg-button-text)" }}
           aria-label="Bo'sh transport qo'shish"
         >
-          +
+          + E'lon
         </button>
       )}
     </div>

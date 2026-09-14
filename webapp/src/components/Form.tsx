@@ -58,8 +58,8 @@ export function SegmentedControl<T extends string>({
             className="whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors"
             style={
               active
-                ? { background: "var(--tg-button)", color: "var(--tg-button-text)" }
-                : { background: "var(--tg-secondary-bg)", color: "var(--tg-hint)", border: "1px solid rgba(0,0,0,0.08)" }
+                ? { background: "var(--yb-green)", color: "#fff" }
+                : { background: "#f3f4f6", color: "#4b5563" }
             }
           >
             {opt.label}

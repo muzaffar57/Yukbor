@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header } from "../components/Header";
+import { BrandHeader } from "../components/Header";
 import { Field, Select, TextArea, TextInput, ErrorBanner } from "../components/Form";
 import { createDriverOffer, extractErrorMessage } from "../lib/api";
 import { REGION_LABELS, VEHICLE_TYPE_LABELS, LOAD_TYPE_LABELS, PAYMENT_TYPE_LABELS } from "../types";
@@ -101,7 +101,7 @@ export function CreateDriverOfferPage() {
 
   return (
     <div>
-      <Header title="Bo'sh transport e'loni" />
+      <BrandHeader showBack />
       <div className="flex flex-col gap-4 p-4 pb-24">
         <div
           className="rounded-xl px-3.5 py-2.5 text-[12px]"

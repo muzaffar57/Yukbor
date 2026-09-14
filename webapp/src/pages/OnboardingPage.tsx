@@ -85,11 +85,13 @@ export function OnboardingPage() {
   return (
     <div className="flex min-h-full flex-col px-5" style={{ paddingTop: "calc(2rem + var(--safe-top))" }}>
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <div className="text-5xl">🚛</div>
-        <h1 className="text-xl font-semibold" style={{ color: "var(--tg-text)" }}>
-          Yukbor'ga xush kelibsiz!
-        </h1>
-        <p className="text-[14px]" style={{ color: "var(--tg-hint)" }}>
+        <p className="text-[28px] font-extrabold" style={{ color: "var(--yb-green)" }}>
+          Yukbor
+        </p>
+        <p className="text-[13px] font-medium" style={{ color: "var(--yb-green)" }}>
+          Yuk topish endi oson!
+        </p>
+        <p className="mt-2 text-[14px]" style={{ color: "var(--tg-hint)" }}>
           O'zbekiston bo'yicha yuk va bo'sh transport e'lonlari. Davom etish uchun qisqa ma'lumot to'ldiring.
         </p>
       </div>

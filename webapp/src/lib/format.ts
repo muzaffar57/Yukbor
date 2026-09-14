@@ -2,9 +2,17 @@ export function formatMoney(value: number): string {
   return new Intl.NumberFormat("uz-UZ").format(Math.round(value)) + " so'm";
 }
 
+export function kgToTons(kg: number): number {
+  return kg / 1000;
+}
+
+export function tonsToKg(tons: number): number {
+  return Math.round(tons * 1000 * 1000) / 1000;
+}
+
 export function formatWeight(kg: number): string {
   if (kg >= 1000) {
-    const tons = kg / 1000;
+    const tons = kgToTons(kg);
     return `${tons % 1 === 0 ? tons.toFixed(0) : tons.toFixed(1)} tonna`;
   }
   return `${kg} kg`;

@@ -1,12 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --tg-bg: #f4f4f5;
+  --yb-green: #16a34a;
+  --yb-green-dark: #15803d;
+  --yb-green-soft: #dcfce7;
+  --yb-origin: #16a34a;
+  --yb-dest: #ef4444;
+  --tg-bg: #f3f4f6;
   --tg-secondary-bg: #ffffff;
   --tg-text: #0f172a;
   --tg-hint: #6b7280;
-  --tg-link: #2481cc;
-  --tg-button: #2481cc;
+  --tg-link: #16a34a;
+  --tg-button: #16a34a;
   --tg-button-text: #ffffff;
   --tg-header-bg: #ffffff;
   --safe-top: env(safe-area-inset-top, 0px);

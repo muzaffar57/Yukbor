@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Header } from "../components/Header";
+import { BrandHeader } from "../components/Header";
 import { FullPageSpinner } from "../components/Spinner";
 import { ErrorState } from "../components/EmptyState";
 import { LoadTypeBadge, StatusBadge } from "../components/Badge";
 import { fetchDriverOffer, updateDriverOfferStatus, extractErrorMessage } from "../lib/api";
 import type { DriverOfferOut } from "../types";
 import { REGION_LABELS, VEHICLE_TYPE_LABELS, PAYMENT_TYPE_LABELS } from "../types";
-import { formatDateTime, formatDistance, formatMoney, timeAgo } from "../lib/format";
+import { formatDateTime, formatDistance, formatMoney, formatWeight, timeAgo } from "../lib/format";
 import { useAuth } from "../lib/AuthContext";
 import { useBackButton, useMainButton } from "../lib/hooks";
 import { hapticNotify, showConfirm } from "../lib/telegram";
@@ -76,8 +76,8 @@ export function DriverOfferDetailPage() {
 
   return (
     <div>
-      <Header title="Bo'sh transport" />
-      <div className="flex flex-col gap-4 p-4 pb-8">
+      <BrandHeader showBack />
+      <div className="flex flex-col gap-4 p-4 pb-28">
         <div className="rounded-2xl p-4" style={{ background: "var(--tg-secondary-bg)" }}>
           <div className="flex items-start justify-between gap-2">
             <h2 className="text-lg font-semibold" style={{ color: "var(--tg-text)" }}>
@@ -113,7 +113,7 @@ export function DriverOfferDetailPage() {
         <div className="grid grid-cols-2 gap-3">
           <InfoBox label="Jo'nash sanasi" value={formatDateTime(offer.departure_date)} />
           <InfoBox label="Mashina turi" value={VEHICLE_TYPE_LABELS[offer.vehicle_type]} />
-          {offer.available_weight && <InfoBox label="Bo'sh joy (og'irlik)" value={`${offer.available_weight} kg`} />}
+          {offer.available_weight && <InfoBox label="Bo'sh joy (og'irlik)" value={formatWeight(offer.available_weight)} />}
           {offer.available_volume && <InfoBox label="Bo'sh joy (hajm)" value={`${offer.available_volume} m³`} />}
           {offer.distance_km !== null && <InfoBox label="Taxminiy masofa" value={formatDistance(offer.distance_km)} />}
         </div>
@@ -154,6 +154,30 @@ export function DriverOfferDetailPage() {
           </a>
         </div>
       </div>
+
+      {offer.status === "active" && (
+        <div className="fixed inset-x-0 z-20 px-4" style={{ bottom: "calc(72px + var(--safe-bottom))" }}>
+          {isOwner ? (
+            <button
+              type="button"
+              disabled={updating}
+              onClick={handleMarkCompleted}
+              className="w-full rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
+              style={{ background: "var(--yb-green)" }}
+            >
+              {updating ? "Saqlanmoqda..." : "Yakunlangan deb belgilash"}
+            </button>
+          ) : (
+            <a
+              href={`tel:${offer.driver.phone_number}`}
+              className="block w-full rounded-2xl py-3.5 text-center text-[15px] font-bold text-white"
+              style={{ background: "var(--yb-green)" }}
+            >
+              📞 Qo'ng'iroq qilish
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }

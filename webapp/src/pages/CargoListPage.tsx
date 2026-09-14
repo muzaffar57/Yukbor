@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header } from "../components/Header";
+import { BrandHeader } from "../components/Header";
 import { CargoCard } from "../components/CargoCard";
 import { RouteFilters } from "../components/RouteFilters";
 import { FullPageSpinner } from "../components/Spinner";
@@ -38,10 +38,10 @@ export function CargoListPage() {
 
   return (
     <div>
-      <Header title="Yuklar" />
+      <BrandHeader />
       <RouteFilters
-        fromLabel="Qayerdan (ortish)"
-        toLabel="Qayerga (tushirish)"
+        fromLabel="Qayerdan"
+        toLabel="Qayerga"
         fromValue={filters.loading_region}
         toValue={filters.unloading_region}
         vehicleType={filters.vehicle_type}
@@ -79,11 +79,11 @@ export function CargoListPage() {
       {user?.role === "shipper" && (
         <button
           onClick={() => navigate("/cargos/new")}
-          className="fixed bottom-20 right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full text-2xl shadow-lg"
+          className="fixed bottom-20 right-4 z-20 flex h-14 items-center gap-1 rounded-full px-4 text-[13px] font-bold text-white shadow-lg"
           style={{ background: "var(--tg-button)", color: "var(--tg-button-text)" }}
           aria-label="Yangi yuk qo'shish"
         >
-          +
+          + E'lon
         </button>
       )}
     </div>

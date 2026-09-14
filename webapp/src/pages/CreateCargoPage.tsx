@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header } from "../components/Header";
-import { Field, Select, TextArea, TextInput, ErrorBanner } from "../components/Form";
+import { BrandHeader } from "../components/Header";
+import { Field, Select, TextArea, TextInput, ErrorBanner, SegmentedControl } from "../components/Form";
 import { createCargo, uploadCargoPhotos, extractErrorMessage } from "../lib/api";
 import { REGION_LABELS, VEHICLE_TYPE_LABELS, LOAD_TYPE_LABELS, PAYMENT_TYPE_LABELS } from "../types";
 import type { Region, VehicleType, LoadType, PaymentType } from "../types";
 import { useBackButton, useMainButton } from "../lib/hooks";
 import { hapticNotify, showAlert } from "../lib/telegram";
+import { tonsToKg } from "../lib/format";
 
 export function CreateCargoPage() {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ export function CreateCargoPage() {
       const cargo = await createCargo({
         title: title.trim(),
         description: description.trim() || null,
-        weight: Number(weight),
+        weight: tonsToKg(Number(weight)),
         volume: volume ? Number(volume) : null,
         loading_region: loadingRegion as Region,
         loading_district: loadingDistrict.trim() || null,
@@ -113,83 +114,29 @@ export function CreateCargoPage() {
 
   return (
     <div>
-      <Header title="Yangi yuk e'loni" />
-      <div className="flex flex-col gap-4 p-4 pb-24">
-        <Field label="Yuk nomi" required>
-          <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Masalan: Poliuretan profil" />
-        </Field>
+      <BrandHeader showBack />
+      <div className="flex flex-col gap-4 px-4 pb-24">
+        <div>
+          <h2 className="text-[18px] font-extrabold">Yangi yuk e'loni</h2>
+          <p className="text-[13px]" style={{ color: "var(--tg-hint)" }}>
+            Yuk ma'lumotlarini kiriting va e'lonni joylashtiring
+          </p>
+        </div>
 
-        <Field label="Izoh" hint="Ehtiyotkorlik, yuklash vaqti va h.k.">
-          <TextArea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Field label="Yuk nomi" required>
+          <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Masalan: Penoplast mahsulotlari" />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Og'irligi (kg)" required>
-            <TextInput type="number" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="5000" />
+          <Field label="Og'irligi" required hint="tonna">
+            <TextInput type="number" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="Masalan: 5" />
           </Field>
-          <Field label="Hajmi (m³)">
-            <TextInput type="number" inputMode="decimal" value={volume} onChange={(e) => setVolume(e.target.value)} placeholder="12" />
+          <Field label="Hajmi" hint="m³">
+            <TextInput type="number" inputMode="decimal" value={volume} onChange={(e) => setVolume(e.target.value)} placeholder="Masalan: 12" />
           </Field>
         </div>
 
-        <div className="rounded-2xl p-3.5" style={{ background: "var(--tg-secondary-bg)" }}>
-          <p className="mb-3 text-[13px] font-semibold" style={{ color: "var(--tg-text)" }}>
-            📍 Ortish manzili
-          </p>
-          <div className="flex flex-col gap-3">
-            <Field label="Viloyat" required>
-              <Select value={loadingRegion} onChange={(e) => setLoadingRegion(e.target.value as Region)}>
-                <option value="">Tanlang</option>
-                {Object.entries(REGION_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Tuman / shahar">
-              <TextInput value={loadingDistrict} onChange={(e) => setLoadingDistrict(e.target.value)} placeholder="Masalan: Qibray tumani" />
-            </Field>
-            <Field label="Mo'ljal (ko'cha, bozor va h.k.)">
-              <TextInput value={loadingLandmark} onChange={(e) => setLoadingLandmark(e.target.value)} placeholder="Masalan: Ko'kcha bozori yaqinida" />
-            </Field>
-            <button
-              type="button"
-              onClick={handleLocate}
-              disabled={locating}
-              className="self-start rounded-xl px-3.5 py-2 text-[13px] font-medium disabled:opacity-50"
-              style={{ background: coords ? "rgba(16,185,129,0.15)" : "var(--tg-bg)", color: coords ? "#047857" : "var(--tg-link)", border: "1px solid rgba(0,0,0,0.08)" }}
-            >
-              {locating ? "Aniqlanmoqda..." : coords ? "✅ GPS ulandi" : "📍 GPS joylashuvni ulash (ixtiyoriy)"}
-            </button>
-          </div>
-        </div>
-
-        <div className="rounded-2xl p-3.5" style={{ background: "var(--tg-secondary-bg)" }}>
-          <p className="mb-3 text-[13px] font-semibold" style={{ color: "var(--tg-text)" }}>
-            🏁 Tushirish manzili
-          </p>
-          <div className="flex flex-col gap-3">
-            <Field label="Viloyat" required>
-              <Select value={unloadingRegion} onChange={(e) => setUnloadingRegion(e.target.value as Region)}>
-                <option value="">Tanlang</option>
-                {Object.entries(REGION_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Tuman / shahar">
-              <TextInput value={unloadingDistrict} onChange={(e) => setUnloadingDistrict(e.target.value)} />
-            </Field>
-            <Field label="Mo'ljal">
-              <TextInput value={unloadingLandmark} onChange={(e) => setUnloadingLandmark(e.target.value)} />
-            </Field>
-          </div>
-        </div>
-
-        <Field label="Kerakli mashina turi" required>
+        <Field label="Mashina turi" required>
           <Select value={vehicleType} onChange={(e) => setVehicleType(e.target.value as VehicleType)}>
             <option value="">Tanlang</option>
             {Object.entries(VEHICLE_TYPE_LABELS).map(([value, label]) => (
@@ -200,19 +147,43 @@ export function CreateCargoPage() {
           </Select>
         </Field>
 
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Ortish viloyati" required>
+            <Select value={loadingRegion} onChange={(e) => setLoadingRegion(e.target.value as Region)}>
+              <option value="">Tanlang</option>
+              {Object.entries(REGION_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Tushirish viloyati" required>
+            <Select value={unloadingRegion} onChange={(e) => setUnloadingRegion(e.target.value as Region)}>
+              <option value="">Tanlang</option>
+              {Object.entries(REGION_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+
         <Field label="Yuk turi" required>
-          <Select value={loadType} onChange={(e) => setLoadType(e.target.value as LoadType)}>
-            {Object.entries(LOAD_TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
+          <SegmentedControl
+            value={loadType}
+            onChange={setLoadType}
+            options={(Object.keys(LOAD_TYPE_LABELS) as LoadType[]).map((value) => ({
+              value,
+              label: LOAD_TYPE_LABELS[value],
+            }))}
+          />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Narx (so'm)" required>
-            <TextInput type="number" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="1500000" />
+            <TextInput type="number" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="2800000" />
           </Field>
           <Field label="To'lov turi" required>
             <Select value={paymentType} onChange={(e) => setPaymentType(e.target.value as PaymentType)}>
@@ -230,14 +201,50 @@ export function CreateCargoPage() {
           <TextInput type="date" value={loadingDate} onChange={(e) => setLoadingDate(e.target.value)} />
         </Field>
 
-        <Field label="Rasmlar (ixtiyoriy, max 5MB, JPG/PNG)">
+        <div className="rounded-3xl p-3.5" style={{ background: "#ecfdf5" }}>
+          <p className="mb-2 text-[13px] font-bold" style={{ color: "var(--yb-green-dark)" }}>
+            Ortish manzili
+          </p>
+          <Field label="Tuman / aniq manzil">
+            <TextInput value={loadingLandmark} onChange={(e) => setLoadingLandmark(e.target.value)} placeholder="Masalan: Industriel zona, 5-ombor" />
+          </Field>
+          <Field label="Tuman (ixtiyoriy)">
+            <TextInput value={loadingDistrict} onChange={(e) => setLoadingDistrict(e.target.value)} />
+          </Field>
+          <button
+            type="button"
+            onClick={handleLocate}
+            disabled={locating}
+            className="mt-2 rounded-xl px-3 py-2 text-[13px] font-semibold disabled:opacity-50"
+            style={{ background: coords ? "var(--yb-green)" : "#fff", color: coords ? "#fff" : "var(--yb-green)" }}
+          >
+            {locating ? "Aniqlanmoqda..." : coords ? "GPS ulandi" : "GPS ni ulash"}
+          </button>
+        </div>
+
+        <div className="rounded-3xl p-3.5" style={{ background: "#fef2f2" }}>
+          <p className="mb-2 text-[13px] font-bold" style={{ color: "#b91c1c" }}>
+            Tushirish manzili
+          </p>
+          <Field label="Tuman / aniq manzil">
+            <TextInput value={unloadingLandmark} onChange={(e) => setUnloadingLandmark(e.target.value)} placeholder="Masalan: Yangihayot tumani" />
+          </Field>
+          <Field label="Tuman (ixtiyoriy)">
+            <TextInput value={unloadingDistrict} onChange={(e) => setUnloadingDistrict(e.target.value)} />
+          </Field>
+        </div>
+
+        <Field label="Qo'shimcha ma'lumot">
+          <TextArea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Agar qo'shimcha ma'lumot bo'lsa, shu yerga yozing" />
+        </Field>
+
+        <Field label="Rasmlar (ixtiyoriy, JPG/PNG)">
           <input
             type="file"
             accept="image/jpeg,image/png"
             multiple
             onChange={(e) => setPhotos(Array.from(e.target.files ?? []).slice(0, 5))}
             className="text-[13px]"
-            style={{ color: "var(--tg-text)" }}
           />
           {photos.length > 0 && (
             <span className="text-[12px]" style={{ color: "var(--tg-hint)" }}>
@@ -252,8 +259,8 @@ export function CreateCargoPage() {
           type="button"
           disabled={!canSubmit || submitting}
           onClick={handleSubmit}
-          className="rounded-xl px-4 py-3 text-[15px] font-semibold disabled:opacity-40"
-          style={{ background: "var(--tg-button)", color: "var(--tg-button-text)" }}
+          className="rounded-2xl px-4 py-3.5 text-[15px] font-bold text-white disabled:opacity-40"
+          style={{ background: "var(--yb-green)" }}
         >
           {submitting ? "Yuborilmoqda..." : "E'lonni joylashtirish"}
         </button>

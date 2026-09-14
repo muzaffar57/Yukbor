@@ -67,8 +67,8 @@ export const LoadType = {
 export type LoadType = (typeof LoadType)[keyof typeof LoadType];
 
 export const LOAD_TYPE_LABELS: Record<LoadType, string> = {
-  toliq_mashina: "To'liq mashina",
-  qisman_yuk: "Qisman yuk (lahtak)",
+  toliq_mashina: "To'liq yuk",
+  qisman_yuk: "Lahtak",
 };
 
 export const PaymentType = {
