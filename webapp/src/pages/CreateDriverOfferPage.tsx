@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { BrandHeader } from "../components/Header";
 import { Field, Select, TextArea, TextInput, ErrorBanner } from "../components/Form";
 import { createDriverOffer, extractErrorMessage } from "../lib/api";
-import { REGION_LABELS, VEHICLE_TYPE_LABELS, LOAD_TYPE_LABELS, PAYMENT_TYPE_LABELS } from "../types";
+import { REGION_LABELS, VEHICLE_TYPE_LABELS, VEHICLE_TYPE_OPTIONS, LOAD_TYPE_LABELS, PAYMENT_TYPE_LABELS } from "../types";
 import type { Region, VehicleType, LoadType, PaymentType } from "../types";
 import { useBackButton, useMainButton } from "../lib/hooks";
 import { hapticNotify, showAlert } from "../lib/telegram";
@@ -179,9 +179,9 @@ export function CreateDriverOfferPage() {
         <Field label="Mashina turi" required>
           <Select value={vehicleType} onChange={(e) => setVehicleType(e.target.value as VehicleType)}>
             <option value="">Tanlang</option>
-            {Object.entries(VEHICLE_TYPE_LABELS).map(([value, label]) => (
+            {VEHICLE_TYPE_OPTIONS.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {VEHICLE_TYPE_LABELS[value]}
               </option>
             ))}
           </Select>

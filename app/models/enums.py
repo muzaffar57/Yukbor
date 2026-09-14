@@ -31,10 +31,21 @@ class Region(str, enum.Enum):
 
 
 class VehicleType(str, enum.Enum):
-    BORTOVOY = "bortovoy"
-    TENTOVKA = "tentovka"
-    IZOTERM = "izoterm"  # xolodilnik
+    KATTA_ISUZU = "katta_isuzu"
+    KICHIK_ISUZU = "kichik_isuzu"
+    PARAVOZ = "paravoz"
+    SHALANDA = "shalanda"
+    REF = "ref"
+    TONAR = "tonar"
+    CHAKMAN = "chakman"
+    KAMAZ = "kamaz"
+    LABO = "labo"
+    BONGO = "bongo"
     FURA = "fura"
+    TENTOVKA = "tentovka"
+    BORTOVOY = "bortovoy"
+    IZOTERM = "izoterm"  # xolodilnik / eski ref
+    # Eski e'lonlar uchun saqlanadi, yangi formida chiqmaydi.
     ISUZU = "isuzu"
     LABO_CHANGAN = "labo_changan"
     BOSHQA = "boshqa"

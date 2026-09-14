@@ -1,4 +1,4 @@
-import { REGION_LABELS, VEHICLE_TYPE_LABELS, LOAD_TYPE_LABELS } from "../types";
+import { REGION_LABELS, VEHICLE_TYPE_LABELS, VEHICLE_TYPE_OPTIONS, LOAD_TYPE_LABELS } from "../types";
 import type { LoadType, Region, VehicleType } from "../types";
 
 interface RouteFiltersProps {
@@ -101,9 +101,9 @@ export function RouteFilters({
             onChange={(e) => onVehicleChange((e.target.value || undefined) as VehicleType | undefined)}
           >
             <option value="">Mashina turi — barchasi</option>
-            {Object.entries(VEHICLE_TYPE_LABELS).map(([value, label]) => (
+            {VEHICLE_TYPE_OPTIONS.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {VEHICLE_TYPE_LABELS[value]}
               </option>
             ))}
           </select>

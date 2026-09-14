@@ -40,10 +40,20 @@ export const REGION_LABELS: Record<Region, string> = {
 };
 
 export const VehicleType = {
-  BORTOVOY: "bortovoy",
-  TENTOVKA: "tentovka",
-  IZOTERM: "izoterm",
+  KATTA_ISUZU: "katta_isuzu",
+  KICHIK_ISUZU: "kichik_isuzu",
+  PARAVOZ: "paravoz",
+  SHALANDA: "shalanda",
+  REF: "ref",
+  TONAR: "tonar",
+  CHAKMAN: "chakman",
+  KAMAZ: "kamaz",
+  LABO: "labo",
+  BONGO: "bongo",
   FURA: "fura",
+  TENTOVKA: "tentovka",
+  BORTOVOY: "bortovoy",
+  IZOTERM: "izoterm",
   ISUZU: "isuzu",
   LABO_CHANGAN: "labo_changan",
   BOSHQA: "boshqa",
@@ -51,14 +61,43 @@ export const VehicleType = {
 export type VehicleType = (typeof VehicleType)[keyof typeof VehicleType];
 
 export const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
-  bortovoy: "Bortovoy",
-  tentovka: "Tentovka",
-  izoterm: "Izoterm (Xolodilnik)",
+  katta_isuzu: "Katta Isuzu",
+  kichik_isuzu: "Kichik Isuzu",
+  paravoz: "Paravoz",
+  shalanda: "Shalanda",
+  ref: "Ref",
+  tonar: "Tonar",
+  chakman: "Chakman",
+  kamaz: "Kamaz",
+  labo: "Labo",
+  bongo: "Bongo",
   fura: "Fura",
+  tentovka: "Tento'vka",
+  bortovoy: "Bortovoy",
+  izoterm: "Izoterm (Xolodilnik)",
   isuzu: "Isuzu",
   labo_changan: "Labo/Changan",
   boshqa: "Boshqa",
 };
+
+/** Yangi e'lon va filtrda chiqadigan turlar (eski isuzu/labo_changan yo'q). */
+export const VEHICLE_TYPE_OPTIONS: VehicleType[] = [
+  "katta_isuzu",
+  "kichik_isuzu",
+  "paravoz",
+  "shalanda",
+  "ref",
+  "tonar",
+  "chakman",
+  "kamaz",
+  "labo",
+  "bongo",
+  "fura",
+  "tentovka",
+  "bortovoy",
+  "izoterm",
+  "boshqa",
+];
 
 export const LoadType = {
   TOLIQ_MASHINA: "toliq_mashina",

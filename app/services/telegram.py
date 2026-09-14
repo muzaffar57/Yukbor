@@ -17,10 +17,20 @@ from app.models.enums import LoadType, PaymentType, VehicleType
 logger = logging.getLogger("telegram_service")
 
 VEHICLE_TYPE_LABELS: dict[VehicleType, str] = {
-    VehicleType.BORTOVOY: "Bortovoy",
-    VehicleType.TENTOVKA: "Tento'vka",
-    VehicleType.IZOTERM: "Izoterm (Xolodilnik)",
+    VehicleType.KATTA_ISUZU: "Katta Isuzu",
+    VehicleType.KICHIK_ISUZU: "Kichik Isuzu",
+    VehicleType.PARAVOZ: "Paravoz",
+    VehicleType.SHALANDA: "Shalanda",
+    VehicleType.REF: "Ref",
+    VehicleType.TONAR: "Tonar",
+    VehicleType.CHAKMAN: "Chakman",
+    VehicleType.KAMAZ: "Kamaz",
+    VehicleType.LABO: "Labo",
+    VehicleType.BONGO: "Bongo",
     VehicleType.FURA: "Fura",
+    VehicleType.TENTOVKA: "Tento'vka",
+    VehicleType.BORTOVOY: "Bortovoy",
+    VehicleType.IZOTERM: "Izoterm (Xolodilnik)",
     VehicleType.ISUZU: "Isuzu",
     VehicleType.LABO_CHANGAN: "Labo/Changan",
     VehicleType.BOSHQA: "Boshqa",
