@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Numeric, String, Text
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -56,5 +56,6 @@ class DriverOffer(Base):
 
     driver_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    telegram_message_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     driver: Mapped["User"] = relationship(back_populates="driver_offers")  # noqa: F821

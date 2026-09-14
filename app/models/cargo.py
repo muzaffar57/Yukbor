@@ -53,6 +53,9 @@ class Cargo(Base):
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    # Telegram kanalidagi post ID -- yopilganda shu xabarni tahrirlash uchun.
+    telegram_message_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
     owner: Mapped["User"] = relationship(back_populates="cargos")  # noqa: F821
     photos: Mapped[list["CargoPhoto"]] = relationship(  # noqa: F821
         back_populates="cargo", cascade="all, delete-orphan"

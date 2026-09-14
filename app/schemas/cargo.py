@@ -4,6 +4,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.enums import CargoStatus, LoadType, PaymentType, Region, VehicleType
 
+CLOSED_STATUSES = {CargoStatus.COMPLETED, CargoStatus.CANCELED}
+
+
+def _is_closed(status: CargoStatus | str) -> bool:
+    value = getattr(status, "value", status)
+    return value in {CargoStatus.COMPLETED.value, CargoStatus.CANCELED.value, "completed", "canceled"}
+
 
 class CargoCreate(BaseModel):
     title: str = Field(min_length=2, max_length=255)
@@ -98,3 +105,11 @@ class CargoListOut(BaseModel):
     limit: int
     offset: int
     items: list[CargoOut]
+
+
+def serialize_cargo(cargo, viewer_id: int | None = None) -> CargoOut:  # noqa: ARG001
+    """Yopilgan e'londa mijoz telefoni hech kimga qaytmaydi."""
+    data = CargoOut.model_validate(cargo)
+    if _is_closed(cargo.status):
+        data.owner.phone_number = ""
+    return data

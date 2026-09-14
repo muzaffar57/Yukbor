@@ -11,6 +11,7 @@ import { formatDateTime, formatDistance, formatMoney, formatWeight, timeAgo } fr
 import { useAuth } from "../lib/AuthContext";
 import { useBackButton, useMainButton } from "../lib/hooks";
 import { hapticNotify, showConfirm } from "../lib/telegram";
+import { ClosedBanner, ClosedStamp } from "../components/ClosedStamp";
 
 export function DriverOfferDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +46,9 @@ export function DriverOfferDetailPage() {
 
   async function handleMarkCompleted() {
     if (!offer || updating) return;
-    const ok = await showConfirm("Bu e'lonni 'Yakunlangan' deb belgilaymizmi?");
+    const ok = await showConfirm(
+      "Transport e'lonini yopamizmi? Telegram kanaldagi post ham «Transport yopildi» bo'ladi, telefon raqami yashiriladi."
+    );
     if (!ok) return;
     setUpdating(true);
     try {
@@ -62,7 +65,7 @@ export function DriverOfferDetailPage() {
 
   useMainButton(
     isOwner && offer?.status === "active"
-      ? { text: "✅ Yakunlangan deb belgilash", onClick: handleMarkCompleted, loading: updating }
+      ? { text: "Transportni yopish", onClick: handleMarkCompleted, loading: updating }
       : offer && offer.status === "active"
       ? {
           text: `📞 Qo'ng'iroq: ${offer.driver.phone_number}`,
@@ -78,7 +81,10 @@ export function DriverOfferDetailPage() {
     <div>
       <BrandHeader showBack />
       <div className="flex flex-col gap-4 p-4 pb-28">
-        <div className="rounded-2xl p-4" style={{ background: "var(--tg-secondary-bg)" }}>
+        {offer.status !== "active" && <ClosedBanner>✅ TRANSPORT YOPILDI — telefon raqami yashirilgan</ClosedBanner>}
+
+        <div className="relative overflow-hidden rounded-2xl p-4" style={{ background: "var(--tg-secondary-bg)" }}>
+          {offer.status !== "active" && <ClosedStamp label="TRANSPORT YOPILDI" />}
           <div className="flex items-start justify-between gap-2">
             <h2 className="text-lg font-semibold" style={{ color: "var(--tg-text)" }}>
               {REGION_LABELS[offer.departure_region]} → {offer.destination_region ? REGION_LABELS[offer.destination_region] : "Kelishuv bo'yicha"}
@@ -149,9 +155,15 @@ export function DriverOfferDetailPage() {
           <p className="text-[15px] font-medium" style={{ color: "var(--tg-text)" }}>
             {offer.driver.full_name}
           </p>
-          <a href={`tel:${offer.driver.phone_number}`} className="text-[15px] font-medium" style={{ color: "var(--tg-link)" }}>
-            📞 {offer.driver.phone_number}
-          </a>
+          {offer.status === "active" && offer.driver.phone_number ? (
+            <a href={`tel:${offer.driver.phone_number}`} className="text-[15px] font-medium" style={{ color: "var(--tg-link)" }}>
+              📞 {offer.driver.phone_number}
+            </a>
+          ) : (
+            <p className="text-[15px] font-medium" style={{ color: "var(--tg-hint)" }}>
+              🔒 Raqam yashirilgan
+            </p>
+          )}
         </div>
       </div>
 
@@ -165,7 +177,7 @@ export function DriverOfferDetailPage() {
               className="w-full rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
               style={{ background: "var(--yb-green)" }}
             >
-              {updating ? "Saqlanmoqda..." : "Yakunlangan deb belgilash"}
+              {updating ? "Yopilmoqda..." : "Transportni yopish"}
             </button>
           ) : (
             <a

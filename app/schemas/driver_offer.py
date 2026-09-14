@@ -93,3 +93,14 @@ class DriverOfferListOut(BaseModel):
     limit: int
     offset: int
     items: list[DriverOfferOut]
+
+
+def serialize_driver_offer(offer, viewer_id: int | None = None) -> DriverOfferOut:  # noqa: ARG001
+    data = DriverOfferOut.model_validate(offer)
+    closed = offer.status in {CargoStatus.COMPLETED, CargoStatus.CANCELED} or str(offer.status) in {
+        "completed",
+        "canceled",
+    }
+    if closed:
+        data.driver.phone_number = ""
+    return data

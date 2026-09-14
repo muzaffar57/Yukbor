@@ -252,6 +252,20 @@ Railway static site) joylashtiriladi. Deploy qilishdan oldin
 `.env.production` faylidagi `VITE_API_URL`ni haqiqiy backend manzilingizga
 (Railway URL) moslashtiring.
 
+### Yukni yopish
+
+Faqat e'lonni joylagan odam Mini App'da **Yukni yopish** tugmasini bosadi.
+Yopilgandan keyin:
+
+- ilovada **YUK YOPILDI** tamg'asi chiqadi;
+- telefon raqami yashiriladi (qo'ng'iroq tugmasi yo'qoladi);
+- Telegram kanaldagi shu post avtomatik tahrirlanadi: **YUK YOPILDI**,
+  raqam o'rniga «Mijoz raqami yashirilgan».
+
+Eski e'lonlar (post ID saqlanmagan) kanalda tahrirlanmaydi — faqat yangi
+e'lonlar uchun ishlaydi. Haydovchi e'lonlari uchun xuddi shu qoida:
+**Transportni yopish**.
+
 Ilova tayyor bo'lgandan keyin, [@BotFather](https://t.me/BotFather) orqali
 botingizga Menu Button (`/setmenubutton`) qo'shib, WebApp URL'ini kiriting —
 shundan keyin foydalanuvchilar botni ochganda to'g'ridan-to'g'ri ilova ochiladi.

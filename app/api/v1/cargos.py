@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_shipper, get_current_user
+from app.api.deps import get_current_shipper, get_current_user, get_optional_user
 from app.core.config import settings
 from app.crud.cargo import (
     add_cargo_photo,
@@ -17,8 +17,8 @@ from app.crud.cargo import (
 from app.db.session import get_db
 from app.models.enums import CargoStatus, LoadType, Region, VehicleType
 from app.models.user import User
-from app.schemas.cargo import CargoCreate, CargoListOut, CargoOut, CargoPhotoOut, CargoStatusUpdate
-from app.services.telegram import post_cargo_to_channel
+from app.schemas.cargo import CargoCreate, CargoListOut, CargoOut, CargoPhotoOut, CargoStatusUpdate, serialize_cargo
+from app.services.telegram import mark_cargo_closed_in_channel, post_cargo_to_channel
 
 router = APIRouter(prefix="/cargos", tags=["Cargos (Yuklar)"])
 
@@ -37,8 +37,12 @@ async def create_cargo_endpoint(
     current_user: User = Depends(get_current_shipper),
 ) -> CargoOut:
     cargo = await create_cargo(db, data, owner=current_user)
-    await post_cargo_to_channel(cargo)
-    return CargoOut.model_validate(cargo)
+    message_id = await post_cargo_to_channel(cargo)
+    if message_id is not None:
+        cargo.telegram_message_id = message_id
+        await db.commit()
+        await db.refresh(cargo)
+    return serialize_cargo(cargo, viewer_id=current_user.id)
 
 
 @router.get(
@@ -48,6 +52,7 @@ async def create_cargo_endpoint(
 )
 async def list_cargos_endpoint(
     db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
     loading_region: Region | None = None,
     unloading_region: Region | None = None,
     vehicle_type: VehicleType | None = None,
@@ -74,7 +79,7 @@ async def list_cargos_endpoint(
         total=total,
         limit=limit,
         offset=offset,
-        items=[CargoOut.model_validate(c) for c in items],
+        items=[serialize_cargo(c, viewer_id=current_user.id if current_user else None) for c in items],
     )
 
 
@@ -88,15 +93,19 @@ async def list_my_cargos_endpoint(
     current_user: User = Depends(get_current_user),
 ) -> list[CargoOut]:
     items = await list_my_cargos(db, owner_id=current_user.id)
-    return [CargoOut.model_validate(c) for c in items]
+    return [serialize_cargo(c, viewer_id=current_user.id) for c in items]
 
 
 @router.get("/{cargo_id}", response_model=CargoOut, summary="Bitta yuk haqida to'liq ma'lumot")
-async def get_cargo_endpoint(cargo_id: int, db: AsyncSession = Depends(get_db)) -> CargoOut:
+async def get_cargo_endpoint(
+    cargo_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
+) -> CargoOut:
     cargo = await get_cargo_by_id(db, cargo_id)
     if cargo is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bunday yuk topilmadi.")
-    return CargoOut.model_validate(cargo)
+    return serialize_cargo(cargo, viewer_id=current_user.id if current_user else None)
 
 
 @router.patch(
@@ -119,7 +128,9 @@ async def update_cargo_status_endpoint(
             detail="Faqat yuk egasi statusni o'zgartira oladi.",
         )
     updated = await update_cargo_status(db, cargo, data.status)
-    return CargoOut.model_validate(updated)
+    if data.status in {CargoStatus.COMPLETED, CargoStatus.CANCELED}:
+        await mark_cargo_closed_in_channel(updated)
+    return serialize_cargo(updated, viewer_id=current_user.id)
 
 
 @router.post(

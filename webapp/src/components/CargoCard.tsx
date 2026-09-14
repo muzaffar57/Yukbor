@@ -4,6 +4,7 @@ import { VEHICLE_TYPE_LABELS, PAYMENT_TYPE_LABELS, REGION_LABELS } from "../type
 import { formatDate, formatMoney, formatWeight } from "../lib/format";
 import { mediaUrl } from "../lib/media";
 import { LoadTypeBadge, StatusBadge, Pill } from "./Badge";
+import { ClosedStamp } from "./ClosedStamp";
 
 export function CargoCard({ cargo, showStatus = false }: { cargo: CargoOut; showStatus?: boolean }) {
   const navigate = useNavigate();
@@ -14,8 +15,9 @@ export function CargoCard({ cargo, showStatus = false }: { cargo: CargoOut; show
   return (
     <button
       onClick={() => navigate(`/cargos/${cargo.id}`)}
-      className="flex w-full gap-3 rounded-3xl bg-white p-3 text-left shadow-sm active:opacity-80"
+      className="relative flex w-full gap-3 overflow-hidden rounded-3xl bg-white p-3 text-left shadow-sm active:opacity-80"
     >
+      {cargo.status !== "active" && <ClosedStamp />}
       <div className="h-[76px] w-[76px] flex-shrink-0 overflow-hidden rounded-2xl bg-gray-100">
         {photo ? (
           <img src={photo} alt="" className="h-full w-full object-cover" />

@@ -3,6 +3,7 @@ import type { DriverOfferOut } from "../types";
 import { REGION_LABELS, VEHICLE_TYPE_LABELS } from "../types";
 import { formatDate, formatMoney, formatWeight } from "../lib/format";
 import { LoadTypeBadge, StatusBadge, Pill } from "./Badge";
+import { ClosedStamp } from "./ClosedStamp";
 
 export function DriverOfferCard({ offer, showStatus = false }: { offer: DriverOfferOut; showStatus?: boolean }) {
   const navigate = useNavigate();
@@ -11,8 +12,9 @@ export function DriverOfferCard({ offer, showStatus = false }: { offer: DriverOf
   return (
     <button
       onClick={() => navigate(`/offers/${offer.id}`)}
-      className="flex w-full gap-3 rounded-3xl bg-white p-3 text-left shadow-sm active:opacity-80"
+      className="relative flex w-full gap-3 overflow-hidden rounded-3xl bg-white p-3 text-left shadow-sm active:opacity-80"
     >
+      {offer.status !== "active" && <ClosedStamp label="YOPILDI" />}
       <div className="flex h-[76px] w-[76px] flex-shrink-0 items-center justify-center rounded-2xl text-3xl" style={{ background: "var(--yb-green-soft)" }}>
         🚛
       </div>
@@ -21,7 +23,7 @@ export function DriverOfferCard({ offer, showStatus = false }: { offer: DriverOf
           <p className="text-[14px] font-bold" style={{ color: "var(--tg-text)" }}>
             {VEHICLE_TYPE_LABELS[offer.vehicle_type]}
           </p>
-          <Pill tone="green">Bo'sh</Pill>
+          {offer.status === "active" ? <Pill tone="green">Bo'sh</Pill> : <StatusBadge status={offer.status} />}
         </div>
         <p className="truncate text-[13px]" style={{ color: "var(--tg-hint)" }}>
           {offer.driver.full_name}

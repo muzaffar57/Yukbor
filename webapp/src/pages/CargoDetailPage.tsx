@@ -12,6 +12,7 @@ import { formatDate, formatDistance, formatMoney, formatVolume, formatWeight } f
 import { useAuth } from "../lib/AuthContext";
 import { useBackButton, useMainButton } from "../lib/hooks";
 import { hapticNotify, showConfirm } from "../lib/telegram";
+import { ClosedBanner, ClosedStamp } from "../components/ClosedStamp";
 
 export function CargoDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +48,9 @@ export function CargoDetailPage() {
 
   async function handleMarkCompleted() {
     if (!cargo || updating) return;
-    const ok = await showConfirm("Bu yukni yakunlangan deb belgilaymizmi?");
+    const ok = await showConfirm(
+      "Yukni yopamizmi? Telegram kanaldagi post ham «Yuk yopildi» bo'ladi, telefon raqami yashiriladi."
+    );
     if (!ok) return;
     setUpdating(true);
     try {
@@ -64,7 +67,7 @@ export function CargoDetailPage() {
 
   useMainButton(
     isOwner && cargo?.status === "active"
-      ? { text: "Yakunlangan deb belgilash", onClick: handleMarkCompleted, loading: updating }
+      ? { text: "Yukni yopish", onClick: handleMarkCompleted, loading: updating }
       : cargo && cargo.status === "active"
         ? {
             text: "Qo'ng'iroq qilish",
@@ -89,6 +92,7 @@ export function CargoDetailPage() {
           ) : (
             <div className="flex h-40 items-center justify-center text-4xl">📦</div>
           )}
+          {cargo.status !== "active" && <ClosedStamp />}
           {photos.length > 1 && (
             <div className="absolute bottom-2 right-2 rounded-full bg-black/55 px-2 py-0.5 text-[11px] text-white">
               {photoIndex + 1}/{photos.length}
@@ -104,6 +108,8 @@ export function CargoDetailPage() {
             ))}
           </div>
         )}
+
+        {cargo.status !== "active" && <ClosedBanner>✅ YUK YOPILDI — mijoz raqami yashirilgan</ClosedBanner>}
 
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -171,9 +177,15 @@ export function CargoDetailPage() {
             <p className="text-[12px]" style={{ color: "var(--tg-hint)" }}>
               Yuk beruvchi
             </p>
-            <a href={`tel:${cargo.owner.phone_number}`} className="text-[13px] font-semibold" style={{ color: "var(--yb-green)" }}>
-              {cargo.owner.phone_number}
-            </a>
+            {cargo.status === "active" && cargo.owner.phone_number ? (
+              <a href={`tel:${cargo.owner.phone_number}`} className="text-[13px] font-semibold" style={{ color: "var(--yb-green)" }}>
+                {cargo.owner.phone_number}
+              </a>
+            ) : (
+              <p className="text-[13px] font-semibold" style={{ color: "var(--tg-hint)" }}>
+                🔒 Raqam yashirilgan
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -191,7 +203,7 @@ export function CargoDetailPage() {
               className="w-full rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
               style={{ background: "var(--yb-green)" }}
             >
-              {updating ? "Saqlanmoqda..." : "Yakunlangan deb belgilash"}
+              {updating ? "Yopilmoqda..." : "Yukni yopish"}
             </button>
           ) : (
             <a

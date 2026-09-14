@@ -63,8 +63,11 @@ def _yandex_maps_link(lat: float, lon: float) -> str:
     return f"https://yandex.uz/maps/?pt={lon},{lat}&z=16&l=map"
 
 
-def build_cargo_message(cargo: Cargo) -> str:
-    lines = ["🚚 <b>Yangi yuk!</b>", ""]
+def build_cargo_message(cargo: Cargo, *, closed: bool = False) -> str:
+    if closed:
+        lines = ["✅ <b>YUK YOPILDI</b>", ""]
+    else:
+        lines = ["🚚 <b>Yangi yuk!</b>", ""]
     lines.append(f"📦 <b>{cargo.title}</b>")
     if cargo.description:
         lines.append(f"📝 {cargo.description}")
@@ -100,37 +103,74 @@ def build_cargo_message(cargo: Cargo) -> str:
         lines.append(f"📅 Ortish sanasi: {cargo.loading_date.strftime('%d.%m.%Y')}")
     lines.append(f"💰 Narx: {cargo.price:,.0f} so'm ({PAYMENT_TYPE_LABELS.get(cargo.payment_type, cargo.payment_type)})")
     lines.append("")
-    lines.append(f"👤 {cargo.owner.full_name}")
-    lines.append(f"📞 {cargo.owner.phone_number}")
+    if closed:
+        lines.append("🔒 Mijoz raqami yashirilgan")
+    else:
+        lines.append(f"👤 {cargo.owner.full_name}")
+        lines.append(f"📞 {cargo.owner.phone_number}")
 
     return "\n".join(lines)
 
 
-async def post_cargo_to_channel(cargo: Cargo) -> None:
-    message_text = build_cargo_message(cargo)
-
+async def _send_channel_message(text: str) -> int | None:
     if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHANNEL_ID:
-        logger.info("[TELEGRAM MOCK] Bot token/kanal sozlanmagan. Yuborilishi kerak bo'lgan xabar:\n%s", message_text)
-        return
-
+        logger.info("[TELEGRAM MOCK] Bot token/kanal sozlanmagan. Yuborilishi kerak bo'lgan xabar:\n%s", text)
+        return None
     try:
         bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
         try:
-            await bot.send_message(
+            sent = await bot.send_message(
                 chat_id=settings.TELEGRAM_CHANNEL_ID,
-                text=message_text,
+                text=text,
                 parse_mode="HTML",
             )
+            return sent.message_id
         finally:
             await bot.session.close()
     except TelegramAPIError:
         logger.exception("Telegram kanalga post yuborishda xatolik yuz berdi")
     except Exception:  # noqa: BLE001
         logger.exception("Telegram xizmatida kutilmagan xatolik")
+    return None
 
 
-def build_driver_offer_message(offer: DriverOffer) -> str:
-    lines = ["🚛 <b>BO'SH TRANSPORT (LAHTAK)</b>", ""]
+async def _edit_channel_message(message_id: int, text: str) -> None:
+    if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHANNEL_ID:
+        logger.info("[TELEGRAM MOCK] Kanal posti yangilanadi (id=%s):\n%s", message_id, text)
+        return
+    try:
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        try:
+            await bot.edit_message_text(
+                chat_id=settings.TELEGRAM_CHANNEL_ID,
+                message_id=message_id,
+                text=text,
+                parse_mode="HTML",
+            )
+        finally:
+            await bot.session.close()
+    except TelegramAPIError:
+        logger.exception("Telegram kanal postini tahrirlashda xatolik yuz berdi")
+    except Exception:  # noqa: BLE001
+        logger.exception("Telegram xizmatida kutilmagan xatolik")
+
+
+async def post_cargo_to_channel(cargo: Cargo) -> int | None:
+    return await _send_channel_message(build_cargo_message(cargo, closed=False))
+
+
+async def mark_cargo_closed_in_channel(cargo: Cargo) -> None:
+    if cargo.telegram_message_id is None:
+        logger.info("Yuk #%s uchun Telegram post ID yo'q -- kanalni yangilab bo'lmaydi", cargo.id)
+        return
+    await _edit_channel_message(cargo.telegram_message_id, build_cargo_message(cargo, closed=True))
+
+
+def build_driver_offer_message(offer: DriverOffer, *, closed: bool = False) -> str:
+    if closed:
+        lines = ["✅ <b>TRANSPORT YOPILDI</b>", ""]
+    else:
+        lines = ["🚛 <b>BO'SH TRANSPORT (LAHTAK)</b>", ""]
 
     if offer.description:
         lines.append(f"📝 {offer.description}")
@@ -175,30 +215,21 @@ def build_driver_offer_message(offer: DriverOffer) -> str:
         lines.append("💰 Narx: Kelishuv bo'yicha")
 
     lines.append("")
-    lines.append(f"👤 {offer.driver.full_name}")
-    lines.append(f"📞 {offer.driver.phone_number}")
+    if closed:
+        lines.append("🔒 Telefon raqami yashirilgan")
+    else:
+        lines.append(f"👤 {offer.driver.full_name}")
+        lines.append(f"📞 {offer.driver.phone_number}")
 
     return "\n".join(lines)
 
 
-async def post_driver_offer_to_channel(offer: DriverOffer) -> None:
-    message_text = build_driver_offer_message(offer)
+async def post_driver_offer_to_channel(offer: DriverOffer) -> int | None:
+    return await _send_channel_message(build_driver_offer_message(offer, closed=False))
 
-    if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHANNEL_ID:
-        logger.info("[TELEGRAM MOCK] Bot token/kanal sozlanmagan. Yuborilishi kerak bo'lgan xabar:\n%s", message_text)
+
+async def mark_driver_offer_closed_in_channel(offer: DriverOffer) -> None:
+    if offer.telegram_message_id is None:
+        logger.info("Bo'sh transport #%s uchun Telegram post ID yo'q -- kanalni yangilab bo'lmaydi", offer.id)
         return
-
-    try:
-        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-        try:
-            await bot.send_message(
-                chat_id=settings.TELEGRAM_CHANNEL_ID,
-                text=message_text,
-                parse_mode="HTML",
-            )
-        finally:
-            await bot.session.close()
-    except TelegramAPIError:
-        logger.exception("Telegram kanalga post yuborishda xatolik yuz berdi")
-    except Exception:  # noqa: BLE001
-        logger.exception("Telegram xizmatida kutilmagan xatolik")
+    await _edit_channel_message(offer.telegram_message_id, build_driver_offer_message(offer, closed=True))

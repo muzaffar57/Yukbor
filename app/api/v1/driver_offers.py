@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_driver, get_current_user
+from app.api.deps import get_current_driver, get_current_user, get_optional_user
 from app.crud.driver_offer import (
     create_driver_offer,
     get_driver_offer_by_id,
@@ -17,8 +17,9 @@ from app.schemas.driver_offer import (
     DriverOfferListOut,
     DriverOfferOut,
     DriverOfferStatusUpdate,
+    serialize_driver_offer,
 )
-from app.services.telegram import post_driver_offer_to_channel
+from app.services.telegram import mark_driver_offer_closed_in_channel, post_driver_offer_to_channel
 
 router = APIRouter(prefix="/driver-offers", tags=["Driver Offers (Bo'sh transport e'lonlari)"])
 
@@ -35,8 +36,12 @@ async def create_driver_offer_endpoint(
     current_user: User = Depends(get_current_driver),
 ) -> DriverOfferOut:
     offer = await create_driver_offer(db, data, driver=current_user)
-    await post_driver_offer_to_channel(offer)
-    return DriverOfferOut.model_validate(offer)
+    message_id = await post_driver_offer_to_channel(offer)
+    if message_id is not None:
+        offer.telegram_message_id = message_id
+        await db.commit()
+        await db.refresh(offer)
+    return serialize_driver_offer(offer, viewer_id=current_user.id)
 
 
 @router.get(
@@ -46,6 +51,7 @@ async def create_driver_offer_endpoint(
 )
 async def list_driver_offers_endpoint(
     db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
     departure_region: Region | None = None,
     destination_region: Region | None = None,
     vehicle_type: VehicleType | None = None,
@@ -68,7 +74,7 @@ async def list_driver_offers_endpoint(
         total=total,
         limit=limit,
         offset=offset,
-        items=[DriverOfferOut.model_validate(o) for o in items],
+        items=[serialize_driver_offer(o, viewer_id=current_user.id if current_user else None) for o in items],
     )
 
 
@@ -82,15 +88,19 @@ async def list_my_driver_offers_endpoint(
     current_user: User = Depends(get_current_user),
 ) -> list[DriverOfferOut]:
     items = await list_my_driver_offers(db, driver_id=current_user.id)
-    return [DriverOfferOut.model_validate(o) for o in items]
+    return [serialize_driver_offer(o, viewer_id=current_user.id) for o in items]
 
 
 @router.get("/{offer_id}", response_model=DriverOfferOut, summary="Bitta bo'sh transport e'loni haqida to'liq ma'lumot")
-async def get_driver_offer_endpoint(offer_id: int, db: AsyncSession = Depends(get_db)) -> DriverOfferOut:
+async def get_driver_offer_endpoint(
+    offer_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
+) -> DriverOfferOut:
     offer = await get_driver_offer_by_id(db, offer_id)
     if offer is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bunday e'lon topilmadi.")
-    return DriverOfferOut.model_validate(offer)
+    return serialize_driver_offer(offer, viewer_id=current_user.id if current_user else None)
 
 
 @router.patch(
@@ -113,4 +123,6 @@ async def update_driver_offer_status_endpoint(
             detail="Faqat e'lon egasi statusni o'zgartira oladi.",
         )
     updated = await update_driver_offer_status(db, offer, data.status)
-    return DriverOfferOut.model_validate(updated)
+    if data.status in {CargoStatus.COMPLETED, CargoStatus.CANCELED}:
+        await mark_driver_offer_closed_in_channel(updated)
+    return serialize_driver_offer(updated, viewer_id=current_user.id)
