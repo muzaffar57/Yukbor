@@ -85,12 +85,61 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 def estimate_distance_km(loading_region: Region, unloading_region: Region) -> float:
-    """Ikki hudud orasidagi taxminiy yo'l masofasini (km) qaytaradi."""
+    """Ikki hudud markazi orasidagi taxminiy yo'l masofasini (km) qaytaradi."""
     if loading_region == unloading_region:
         return INTRA_REGION_DISTANCE_KM
 
     lat1, lon1 = REGION_COORDINATES[loading_region]
     lat2, lon2 = REGION_COORDINATES[unloading_region]
+    return _road_km(lat1, lon1, lat2, lon2, loading_region, unloading_region)
+
+
+def estimate_cargo_distance_km(
+    loading_region: Region,
+    unloading_region: Region,
+    *,
+    loading_lat: float | None = None,
+    loading_lon: float | None = None,
+    unloading_lat: float | None = None,
+    unloading_lon: float | None = None,
+) -> float:
+    """GPS pinlar bo'lsa shulardan, bo'lmasa viloyat markazidan taxminiy km.
+
+    Bu navigator dagi aniq yo'l emas, lekin ikkala pin bo'lsa viloyat-viloyat
+    hisobidan ancha yaqinroq.
+    """
+    has_loading = loading_lat is not None and loading_lon is not None
+    has_unloading = unloading_lat is not None and unloading_lon is not None
+
+    if has_loading and has_unloading:
+        straight = _haversine_km(loading_lat, loading_lon, unloading_lat, unloading_lon)
+        # Ikkala tugma bir xil joyda bosilgan bo'lsa, viloyat hisobiga qaytamiz.
+        if straight < 1:
+            return estimate_distance_km(loading_region, unloading_region)
+        return _road_km(
+            loading_lat, loading_lon, unloading_lat, unloading_lon, loading_region, unloading_region
+        )
+    if has_loading:
+        dest_lat, dest_lon = REGION_COORDINATES[unloading_region]
+        return _road_km(
+            loading_lat, loading_lon, dest_lat, dest_lon, loading_region, unloading_region
+        )
+    if has_unloading:
+        origin_lat, origin_lon = REGION_COORDINATES[loading_region]
+        return _road_km(
+            origin_lat, origin_lon, unloading_lat, unloading_lon, loading_region, unloading_region
+        )
+    return estimate_distance_km(loading_region, unloading_region)
+
+
+def _road_km(
+    lat1: float,
+    lon1: float,
+    lat2: float,
+    lon2: float,
+    region_a: Region,
+    region_b: Region,
+) -> float:
     straight_line_km = _haversine_km(lat1, lon1, lat2, lon2)
-    factor = _road_distance_factor(loading_region, unloading_region)
+    factor = _road_distance_factor(region_a, region_b)
     return round(straight_line_km * factor, 1)

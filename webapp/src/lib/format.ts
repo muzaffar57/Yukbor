@@ -29,6 +29,10 @@ export function formatVolume(m3: number): string {
   return `${m3} m³`;
 }
 
+export function yandexMapsUrl(lat: number, lon: number): string {
+  return `https://yandex.uz/maps/?pt=${lon},${lat}&z=16&l=map`;
+}
+
 export function formatDistance(km: number | null): string {
   if (km === null) return "";
   return `~${Math.round(km)} km`;

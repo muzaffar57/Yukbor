@@ -7,11 +7,18 @@ from app.models.cargo_photo import CargoPhoto
 from app.models.enums import CargoStatus, LoadType, Region, VehicleType
 from app.models.user import User
 from app.schemas.cargo import CargoCreate
-from app.services.distance import estimate_distance_km
+from app.services.distance import estimate_cargo_distance_km
 
 
 async def create_cargo(db: AsyncSession, data: CargoCreate, owner: User) -> Cargo:
-    distance_km = estimate_distance_km(data.loading_region, data.unloading_region)
+    distance_km = estimate_cargo_distance_km(
+        data.loading_region,
+        data.unloading_region,
+        loading_lat=data.loading_lat,
+        loading_lon=data.loading_lon,
+        unloading_lat=data.unloading_lat,
+        unloading_lon=data.unloading_lon,
+    )
 
     cargo = Cargo(
         title=data.title,
@@ -26,6 +33,8 @@ async def create_cargo(db: AsyncSession, data: CargoCreate, owner: User) -> Carg
         unloading_region=data.unloading_region,
         unloading_district=data.unloading_district,
         unloading_landmark=data.unloading_landmark,
+        unloading_lat=data.unloading_lat,
+        unloading_lon=data.unloading_lon,
         distance_km=distance_km,
         vehicle_type=data.vehicle_type,
         load_type=data.load_type,

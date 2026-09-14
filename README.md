@@ -191,11 +191,11 @@ Buning uchun ikki tomonlama funksiya qo'shildi:
 
 ## Muhim texnik qarorlar
 
-- **Masofa (km)** — Google/Yandex Xarita API pullik bo'lgani uchun, MVP
-  bosqichida O'zbekistonning 14 ta hududi markazlari orasidagi masofa GPS
-  koordinatalar asosida taxminan hisoblanadi (`app/services/distance.py`).
-- **Telegram post** — agar yukda GPS koordinatasi (`loading_lat`/`loading_lon`)
-  berilgan bo'lsa, postga avtomatik Yandex Xaritalar havolasi qo'shiladi.
+- **Masofa (km)** — navigator dagi aniq yo'l (Yandex/Google API) pullik.
+  Ikkala joyga ham GPS ulansa, pinlar orasidagi taxminiy yo'l km hisoblanadi;
+  GPS bo'lmasa viloyat markazlari ishlatiladi (`app/services/distance.py`).
+- **Telegram post** — ortish va tushirish GPS bo'lsa, postga Yandex Xaritalar
+  havolalari qo'shiladi. Mini App yuk sahifasida ham xarita ochiladi.
 - **Monetizatsiya** — `User.subscription_expires_at` maydoni tayyor, lekin
   hozircha barcha foydalanuvchilar cheksiz/bepul. Kelajakda faqat
   haydovchilar uchun obuna yoqiladi (yuk beruvchilar doim bepul qoladi).

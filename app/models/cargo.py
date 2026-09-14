@@ -30,6 +30,8 @@ class Cargo(Base):
     unloading_region: Mapped[Region] = mapped_column(String(30), nullable=False, index=True)
     unloading_district: Mapped[str | None] = mapped_column(String(255), nullable=True)
     unloading_landmark: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    unloading_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    unloading_lon: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Avtomatik hisoblangan taxminiy masofa (viloyatlar orasidagi masofa
     # jadvali asosida). Bu aniq GPS-marshrut emas, taxminiy qiymat.

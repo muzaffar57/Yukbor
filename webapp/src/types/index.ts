@@ -134,6 +134,8 @@ export interface CargoOut {
   unloading_region: Region;
   unloading_district: string | null;
   unloading_landmark: string | null;
+  unloading_lat: number | null;
+  unloading_lon: number | null;
   distance_km: number | null;
   vehicle_type: VehicleType;
   load_type: LoadType;
@@ -166,6 +168,8 @@ export interface CargoCreatePayload {
   unloading_region: Region;
   unloading_district?: string | null;
   unloading_landmark?: string | null;
+  unloading_lat?: number | null;
+  unloading_lon?: number | null;
   vehicle_type: VehicleType;
   load_type: LoadType;
   price: number;

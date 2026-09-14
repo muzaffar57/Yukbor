@@ -97,6 +97,8 @@ def build_cargo_message(cargo: Cargo, *, closed: bool = False) -> str:
 
     if cargo.loading_lat is not None and cargo.loading_lon is not None:
         lines.append(f"🗺 Xarita (ortish joyi): {_yandex_maps_link(cargo.loading_lat, cargo.loading_lon)}")
+    if cargo.unloading_lat is not None and cargo.unloading_lon is not None:
+        lines.append(f"🗺 Xarita (tushirish joyi): {_yandex_maps_link(cargo.unloading_lat, cargo.unloading_lon)}")
 
     lines.append("")
     if cargo.loading_date:

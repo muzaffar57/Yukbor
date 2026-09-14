@@ -28,6 +28,8 @@ class CargoCreate(BaseModel):
     unloading_region: Region
     unloading_district: str | None = Field(default=None, max_length=255)
     unloading_landmark: str | None = Field(default=None, max_length=500)
+    unloading_lat: float | None = Field(default=None, ge=-90, le=90)
+    unloading_lon: float | None = Field(default=None, ge=-180, le=180)
 
     vehicle_type: VehicleType
     load_type: LoadType = Field(
@@ -40,10 +42,10 @@ class CargoCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_gps_pair(self) -> "CargoCreate":
-        has_lat = self.loading_lat is not None
-        has_lon = self.loading_lon is not None
-        if has_lat != has_lon:
+        if (self.loading_lat is None) != (self.loading_lon is None):
             raise ValueError("loading_lat va loading_lon ikkisi birga berilishi kerak")
+        if (self.unloading_lat is None) != (self.unloading_lon is None):
+            raise ValueError("unloading_lat va unloading_lon ikkisi birga berilishi kerak")
         return self
 
 
@@ -85,6 +87,8 @@ class CargoOut(BaseModel):
     unloading_region: Region
     unloading_district: str | None
     unloading_landmark: str | None
+    unloading_lat: float | None
+    unloading_lon: float | None
 
     distance_km: float | None
 

@@ -8,7 +8,7 @@ import { fetchCargo, updateCargoStatus, extractErrorMessage } from "../lib/api";
 import { mediaUrl } from "../lib/media";
 import type { CargoOut } from "../types";
 import { REGION_LABELS, VEHICLE_TYPE_LABELS, PAYMENT_TYPE_LABELS } from "../types";
-import { formatDate, formatDistance, formatMoney, formatVolume, formatWeight } from "../lib/format";
+import { formatDate, formatDistance, formatMoney, formatVolume, formatWeight, yandexMapsUrl } from "../lib/format";
 import { useAuth } from "../lib/AuthContext";
 import { useBackButton, useMainButton } from "../lib/hooks";
 import { hapticNotify, showConfirm } from "../lib/telegram";
@@ -138,10 +138,32 @@ export function CargoDetailPage() {
               <p className="text-[12px]" style={{ color: "var(--tg-hint)" }}>
                 {[cargo.loading_district, cargo.loading_landmark].filter(Boolean).join(", ") || "Ortish manzili"}
               </p>
+              {cargo.loading_lat != null && cargo.loading_lon != null && (
+                <a
+                  href={yandexMapsUrl(cargo.loading_lat, cargo.loading_lon)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[12px] font-semibold"
+                  style={{ color: "var(--yb-green)" }}
+                >
+                  🗺 Ortish joyi xaritada
+                </a>
+              )}
               <p className="mt-3 font-bold">{REGION_LABELS[cargo.unloading_region]}</p>
               <p className="text-[12px]" style={{ color: "var(--tg-hint)" }}>
                 {[cargo.unloading_district, cargo.unloading_landmark].filter(Boolean).join(", ") || "Tushirish manzili"}
               </p>
+              {cargo.unloading_lat != null && cargo.unloading_lon != null && (
+                <a
+                  href={yandexMapsUrl(cargo.unloading_lat, cargo.unloading_lon)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[12px] font-semibold"
+                  style={{ color: "var(--yb-dest)" }}
+                >
+                  🗺 Tushirish joyi xaritada
+                </a>
+              )}
             </div>
             {cargo.distance_km !== null && (
               <span className="self-center text-[12px] font-semibold" style={{ color: "var(--tg-hint)" }}>

@@ -29,8 +29,9 @@ export function CreateCargoPage() {
   const [paymentType, setPaymentType] = useState<PaymentType | "">("naqd");
   const [loadingDate, setLoadingDate] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [locating, setLocating] = useState(false);
+  const [loadingCoords, setLoadingCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [unloadingCoords, setUnloadingCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locating, setLocating] = useState<"loading" | "unloading" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,20 +51,22 @@ export function CreateCargoPage() {
     return missing;
   }
 
-  function handleLocate() {
+  function handleLocate(target: "loading" | "unloading") {
     if (!navigator.geolocation) {
       showAlert("Bu qurilmada joylashuvni aniqlash imkoni yo'q.");
       return;
     }
-    setLocating(true);
+    setLocating(target);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-        setLocating(false);
+        const point = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        if (target === "loading") setLoadingCoords(point);
+        else setUnloadingCoords(point);
+        setLocating(null);
         hapticNotify("success");
       },
       () => {
-        setLocating(false);
+        setLocating(null);
         showAlert("Joylashuvni aniqlab bo'lmadi. Ruxsat berilganini tekshiring.");
       },
       { timeout: 8000 }
@@ -91,11 +94,13 @@ export function CreateCargoPage() {
         loading_region: loadingRegion as Region,
         loading_district: loadingDistrict.trim() || null,
         loading_landmark: loadingLandmark.trim() || null,
-        loading_lat: coords?.lat ?? null,
-        loading_lon: coords?.lon ?? null,
+        loading_lat: loadingCoords?.lat ?? null,
+        loading_lon: loadingCoords?.lon ?? null,
         unloading_region: unloadingRegion as Region,
         unloading_district: unloadingDistrict.trim() || null,
         unloading_landmark: unloadingLandmark.trim() || null,
+        unloading_lat: unloadingCoords?.lat ?? null,
+        unloading_lon: unloadingCoords?.lon ?? null,
         vehicle_type: vehicleType as VehicleType,
         load_type: loadType,
         price: priceValue as number,
@@ -228,13 +233,16 @@ export function CreateCargoPage() {
           </Field>
           <button
             type="button"
-            onClick={handleLocate}
-            disabled={locating}
+            onClick={() => handleLocate("loading")}
+            disabled={locating !== null}
             className="mt-2 rounded-xl px-3 py-2 text-[13px] font-semibold disabled:opacity-50"
-            style={{ background: coords ? "var(--yb-green)" : "#fff", color: coords ? "#fff" : "var(--yb-green)" }}
+            style={{ background: loadingCoords ? "var(--yb-green)" : "#fff", color: loadingCoords ? "#fff" : "var(--yb-green)" }}
           >
-            {locating ? "Aniqlanmoqda..." : coords ? "GPS ulandi" : "GPS ni ulash"}
+            {locating === "loading" ? "Aniqlanmoqda..." : loadingCoords ? "Ortish GPS ulandi" : "Ortish joyida GPS ni ulash"}
           </button>
+          <p className="mt-1 text-[11px]" style={{ color: "var(--tg-hint)" }}>
+            Tugmani yuk turgan joyda turib bosing.
+          </p>
         </div>
 
         <div className="rounded-3xl p-3.5" style={{ background: "#fef2f2" }}>
@@ -247,6 +255,18 @@ export function CreateCargoPage() {
           <Field label="Tuman (ixtiyoriy)">
             <TextInput value={unloadingDistrict} onChange={(e) => setUnloadingDistrict(e.target.value)} />
           </Field>
+          <button
+            type="button"
+            onClick={() => handleLocate("unloading")}
+            disabled={locating !== null}
+            className="mt-2 rounded-xl px-3 py-2 text-[13px] font-semibold disabled:opacity-50"
+            style={{ background: unloadingCoords ? "#ef4444" : "#fff", color: unloadingCoords ? "#fff" : "#b91c1c" }}
+          >
+            {locating === "unloading" ? "Aniqlanmoqda..." : unloadingCoords ? "Tushirish GPS ulandi" : "Tushirish joyida GPS ni ulash"}
+          </button>
+          <p className="mt-1 text-[11px]" style={{ color: "var(--tg-hint)" }}>
+            Tugmani yuk tushadigan joyda turib bosing. Ikkalasi ham ulansa haydovchi aniqroq km ko'radi.
+          </p>
         </div>
 
         <Field label="Qo'shimcha ma'lumot">
