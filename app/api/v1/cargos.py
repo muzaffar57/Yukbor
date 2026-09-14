@@ -11,6 +11,7 @@ from app.crud.cargo import (
     create_cargo,
     get_cargo_by_id,
     list_cargos,
+    list_my_cargos,
     update_cargo_status,
 )
 from app.db.session import get_db
@@ -75,6 +76,19 @@ async def list_cargos_endpoint(
         offset=offset,
         items=[CargoOut.model_validate(c) for c in items],
     )
+
+
+@router.get(
+    "/mine",
+    response_model=list[CargoOut],
+    summary="Mening yuk e'lonlarim (barcha statuslar, faqat o'zim yaratganlar)",
+)
+async def list_my_cargos_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[CargoOut]:
+    items = await list_my_cargos(db, owner_id=current_user.id)
+    return [CargoOut.model_validate(c) for c in items]
 
 
 @router.get("/{cargo_id}", response_model=CargoOut, summary="Bitta yuk haqida to'liq ma'lumot")

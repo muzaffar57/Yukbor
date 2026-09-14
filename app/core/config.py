@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHANNEL_ID: str = ""
 
+    # Faqat lokal (development) muhitda WebApp'ni Telegram'siz sinash uchun.
+    # Production'da bu albatta False bo'lishi kerak -- aks holda hech qanday
+    # tekshiruvsiz istalgan foydalanuvchi nomidan kirish mumkin bo'lib qoladi.
+    TELEGRAM_MOCK_AUTH_ENABLED: bool = False
+
     # Fayllar (rasm) uchun
     MEDIA_ROOT: str = "media"
     MAX_PHOTO_SIZE_MB: int = 5

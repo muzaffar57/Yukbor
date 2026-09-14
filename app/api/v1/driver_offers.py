@@ -6,6 +6,7 @@ from app.crud.driver_offer import (
     create_driver_offer,
     get_driver_offer_by_id,
     list_driver_offers,
+    list_my_driver_offers,
     update_driver_offer_status,
 )
 from app.db.session import get_db
@@ -69,6 +70,19 @@ async def list_driver_offers_endpoint(
         offset=offset,
         items=[DriverOfferOut.model_validate(o) for o in items],
     )
+
+
+@router.get(
+    "/mine",
+    response_model=list[DriverOfferOut],
+    summary="Mening bo'sh transport e'lonlarim (barcha statuslar, faqat o'zim yaratganlar)",
+)
+async def list_my_driver_offers_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[DriverOfferOut]:
+    items = await list_my_driver_offers(db, driver_id=current_user.id)
+    return [DriverOfferOut.model_validate(o) for o in items]
 
 
 @router.get("/{offer_id}", response_model=DriverOfferOut, summary="Bitta bo'sh transport e'loni haqida to'liq ma'lumot")

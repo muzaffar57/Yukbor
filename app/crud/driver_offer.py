@@ -88,6 +88,16 @@ async def list_driver_offers(
     return items, total
 
 
+async def list_my_driver_offers(db: AsyncSession, driver_id: int) -> list[DriverOffer]:
+    result = await db.execute(
+        select(DriverOffer)
+        .options(selectinload(DriverOffer.driver))
+        .where(DriverOffer.driver_id == driver_id)
+        .order_by(DriverOffer.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
 async def update_driver_offer_status(db: AsyncSession, offer: DriverOffer, new_status: CargoStatus) -> DriverOffer:
     offer.status = new_status
     await db.commit()

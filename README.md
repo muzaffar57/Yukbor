@@ -1,9 +1,12 @@
-# Yuk Tashish Platformasi — Backend MVP
+# Yuk Tashish Platformasi — MVP (Backend + Telegram WebApp)
 
-O'zbekiston bo'yicha yuk tashish (logistika) platformasining backend qismi.
-Yuk beruvchilar (shipper) yuk e'lonini joylashtiradi, tizim uni avtomatik
-ravishda Telegram kanalga post qiladi, haydovchilar (driver) esa yo'nalish,
-mashina turi va hajm bo'yicha filtrlab yuklarni ko'radi.
+O'zbekiston bo'yicha yuk tashish (logistika) platformasi. Yuk beruvchilar
+(shipper) yuk e'lonini joylashtiradi, tizim uni avtomatik ravishda Telegram
+kanalga post qiladi, haydovchilar (driver) esa yo'nalish, mashina turi va
+hajm bo'yicha filtrlab yuklarni ko'radi. Loyihada ikki qism bor:
+
+- **`app/`** — FastAPI backend (API, baza, Telegram bot integratsiyasi)
+- **`webapp/`** — Telegram Mini App (React frontend, foydalanuvchi shu orqali botni ochib ishlaydi)
 
 ## Texnologiyalar
 
@@ -17,16 +20,17 @@ mashina turi va hajm bo'yicha filtrlab yuklarni ko'radi.
 
 ```
 app/
-  core/       — sozlamalar (.env), xavfsizlik (parol xesh, JWT)
+  core/       — sozlamalar (.env), xavfsizlik (parol xesh, JWT), Telegram initData tekshiruvi
   db/         — ma'lumotlar bazasiga ulanish
-  models/     — SQLAlchemy modellari (User, Cargo, CargoPhoto) va enum'lar
+  models/     — SQLAlchemy modellari (User, Cargo, CargoPhoto, DriverOffer) va enum'lar
   schemas/    — Pydantic sxemalar (kirish/chiqish formatlari)
   crud/       — bazaga yozish/o'qish funksiyalari
-  api/v1/     — API endpointlar (auth, cargos, admin)
+  api/v1/     — API endpointlar (auth, cargos, driver-offers, admin)
   services/   — Telegram xizmati, masofa hisoblash xizmati
 alembic/      — DB migratsiyalari
 scripts/      — administrator yaratish skripti
 media/        — yuklangan rasmlar shu yerda saqlanadi
+webapp/       — Telegram Mini App (React + Vite frontend)
 ```
 
 ## Ishga tushirish — Docker orqali (tavsiya etiladi)
@@ -155,13 +159,18 @@ python -m scripts.create_admin +998901234567
 | POST | `/api/v1/cargos/` | Yangi yuk yaratish + Telegram post (faqat shipper) |
 | GET | `/api/v1/cargos/` | Yuklar ro'yxati (filtr + sahifalash) |
 | GET | `/api/v1/cargos/{id}` | Bitta yuk tafsiloti |
+| GET | `/api/v1/cargos/mine` | Mening yuklarim (barcha statuslar) |
 | PATCH | `/api/v1/cargos/{id}/status` | Status o'zgartirish (faqat egasi) |
 | POST | `/api/v1/cargos/{id}/photos` | Yukka rasm biriktirish (faqat egasi) |
 | POST | `/api/v1/driver-offers/` | Bo'sh transport e'loni yaratish + Telegram post (faqat driver) |
 | GET | `/api/v1/driver-offers/` | Bo'sh transportlar ro'yxati (filtr + sahifalash) |
 | GET | `/api/v1/driver-offers/{id}` | Bitta e'lon tafsiloti |
+| GET | `/api/v1/driver-offers/mine` | Mening bo'sh transport e'lonlarim (barcha statuslar) |
 | PATCH | `/api/v1/driver-offers/{id}/status` | E'lon statusini o'zgartirish (faqat egasi) |
 | POST | `/api/v1/admin/users/{id}/subscription/extend` | Obunani uzaytirish (faqat admin) |
+| GET | `/api/v1/auth/me` | Joriy foydalanuvchi ma'lumoti (token orqali) |
+| POST | `/api/v1/auth/telegram/login` | Telegram WebApp orqali avtomatik kirish |
+| POST | `/api/v1/auth/telegram/register` | Telegram WebApp orqali birinchi ro'yxatdan o'tish |
 | GET | `/health` | Server holatini tekshirish |
 
 ## "Lahtak/qisman yuk" va "Bo'sh transport" tizimi
@@ -192,3 +201,57 @@ Buning uchun ikki tomonlama funksiya qo'shildi:
   haydovchilar uchun obuna yoqiladi (yuk beruvchilar doim bepul qoladi).
 - **Admin huquqi** hech qachon ochiq API orqali berilmaydi, faqat
   `scripts/create_admin.py` skripti orqali (server ichida) beriladi.
+
+## Telegram WebApp (frontend) — `webapp/`
+
+Bu foydalanuvchi ko'radigan qism — Telegram bot ichida ochiladigan Mini App.
+Stack: **Vite + React + TypeScript + Tailwind CSS v4**, rasmiy
+[Telegram WebApp JS SDK](https://core.telegram.org/bots/webapps) orqali.
+
+### Auth qanday ishlaydi
+
+1. Foydalanuvchi Telegram'da botni ochadi (Menu Button orqali WebApp ochiladi).
+2. Telegram avtomatik `initData` (foydalanuvchi Telegram ID, ismi va h.k.,
+   bot tokeni bilan raqamli imzolangan) beradi.
+3. Frontend shu `initData`ni `/api/v1/auth/telegram/login`ga yuboradi.
+   Backend imzoni (`HMAC-SHA256`) tekshiradi va agar bu Telegram ID avval
+   ro'yxatdan o'tgan bo'lsa — darhol JWT token qaytaradi (parol so'ralmaydi).
+4. Agar birinchi marta kirsa — foydalanuvchidan ism, telefon (Telegram'ning
+   rasmiy "Contact Sharing" tugmasi orqali avtomatik olinadi) va rolini
+   (yuk beruvchi/haydovchi) so'rab, `/api/v1/auth/telegram/register`ga
+   yuboradi.
+5. Olingan JWT token `localStorage`da saqlanadi va keyingi barcha so'rovlarga
+   `Authorization: Bearer <token>` sifatida qo'shiladi.
+
+### Lokal ishga tushirish
+
+```bash
+cd webapp
+npm install
+npm run dev
+```
+
+Server `http://localhost:5842` da ochiladi. `.env.development` faylida
+`VITE_API_URL=http://localhost:8742` ko'rsatilgan (lokal backend'ga ulanadi).
+
+**Muhim**: Telegram tashqarisida (oddiy brauzerda) ochilganda, ilova
+avtomatik "test rejimi"ga o'tadi — bu holatda `TELEGRAM_MOCK_AUTH_ENABLED=true`
+qilib qo'yilgan backend kerak bo'ladi (`.env` faylida), aks holda ro'yxatdan
+o'tish ishlamaydi. **Production'da bu bayroq albatta `false` (yoki umuman
+yo'q) bo'lishi kerak** — aks holda tekshiruvsiz kirish imkoni qoladi.
+
+### Production build va joylashtirish
+
+```bash
+cd webapp
+npm run build   # natija: webapp/dist/
+```
+
+`webapp/dist/` — statik fayllar, istalgan statik hosting'ga (Vercel, Netlify,
+Railway static site) joylashtiriladi. Deploy qilishdan oldin
+`.env.production` faylidagi `VITE_API_URL`ni haqiqiy backend manzilingizga
+(Railway URL) moslashtiring.
+
+Ilova tayyor bo'lgandan keyin, [@BotFather](https://t.me/BotFather) orqali
+botingizga Menu Button (`/setmenubutton`) qo'shib, WebApp URL'ini kiriting —
+shundan keyin foydalanuvchilar botni ochganda to'g'ridan-to'g'ri ilova ochiladi.

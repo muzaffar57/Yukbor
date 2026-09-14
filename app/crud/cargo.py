@@ -96,6 +96,16 @@ async def list_cargos(
     return items, total
 
 
+async def list_my_cargos(db: AsyncSession, owner_id: int) -> list[Cargo]:
+    result = await db.execute(
+        select(Cargo)
+        .options(selectinload(Cargo.owner), selectinload(Cargo.photos))
+        .where(Cargo.owner_id == owner_id)
+        .order_by(Cargo.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
 async def update_cargo_status(db: AsyncSession, cargo: Cargo, new_status: CargoStatus) -> Cargo:
     cargo.status = new_status
     await db.commit()

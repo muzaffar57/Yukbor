@@ -47,5 +47,7 @@ class UserOut(BaseModel):
     role: UserRole
     is_active: bool
     is_admin: bool
+    telegram_id: int | None = None
+    telegram_username: str | None = None
     subscription_expires_at: datetime | None
     created_at: datetime
