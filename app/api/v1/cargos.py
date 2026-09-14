@@ -41,7 +41,7 @@ async def create_cargo_endpoint(
     if message_id is not None:
         cargo.telegram_message_id = message_id
         await db.commit()
-        await db.refresh(cargo)
+        cargo = await get_cargo_by_id(db, cargo.id) or cargo
     return serialize_cargo(cargo, viewer_id=current_user.id)
 
 

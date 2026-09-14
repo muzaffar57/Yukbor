@@ -40,7 +40,7 @@ async def create_driver_offer_endpoint(
     if message_id is not None:
         offer.telegram_message_id = message_id
         await db.commit()
-        await db.refresh(offer)
+        offer = await get_driver_offer_by_id(db, offer.id) or offer
     return serialize_driver_offer(offer, viewer_id=current_user.id)
 
 
