@@ -2,23 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../components/Header";
 import { DriverOfferCard } from "../components/DriverOfferCard";
+import { RouteFilters } from "../components/RouteFilters";
 import { FullPageSpinner } from "../components/Spinner";
 import { EmptyState, ErrorState } from "../components/EmptyState";
-import { Select } from "../components/Form";
 import { fetchDriverOffers, extractErrorMessage, type DriverOfferFilters } from "../lib/api";
 import type { DriverOfferOut } from "../types";
-import { REGION_LABELS, VEHICLE_TYPE_LABELS } from "../types";
-import type { Region, VehicleType } from "../types";
 import { useAuth } from "../lib/AuthContext";
-import { hapticImpact } from "../lib/telegram";
 
 export function DriverOffersListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [items, setItems] = useState<DriverOfferOut[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<DriverOfferFilters>({});
 
   async function load(currentFilters: DriverOfferFilters) {
@@ -27,6 +24,7 @@ export function DriverOffersListPage() {
     try {
       const result = await fetchDriverOffers({ ...currentFilters, limit: 50 });
       setItems(result.items);
+      setTotal(result.total);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -36,107 +34,47 @@ export function DriverOffersListPage() {
 
   useEffect(() => {
     load(filters);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  }, [filters.departure_region, filters.destination_region, filters.vehicle_type, filters.load_type]);
 
   return (
     <div>
-      <Header
-        title="Bo'sh transport"
-        right={
-          <button
-            onClick={() => setShowFilters((v) => !v)}
-            className="relative rounded-full px-3 py-1.5 text-[13px] font-medium"
-            style={{ background: "var(--tg-secondary-bg)", color: "var(--tg-link)" }}
-          >
-            ⚙️ Filtr
-            {activeFilterCount > 0 && (
-              <span
-                className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white"
-                style={{ background: "var(--tg-link)" }}
-              >
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
+      <Header title="Bo'sh transport" />
+      <RouteFilters
+        fromLabel="Qayerdan (jo'nash)"
+        toLabel="Qayerga (borish)"
+        fromValue={filters.departure_region}
+        toValue={filters.destination_region}
+        vehicleType={filters.vehicle_type}
+        loadType={filters.load_type}
+        onFromChange={(departure_region) => setFilters((f) => ({ ...f, departure_region }))}
+        onToChange={(destination_region) => setFilters((f) => ({ ...f, destination_region }))}
+        onVehicleChange={(vehicle_type) => setFilters((f) => ({ ...f, vehicle_type }))}
+        onLoadTypeChange={(load_type) => setFilters((f) => ({ ...f, load_type }))}
+        onSwap={() =>
+          setFilters((f) => ({
+            ...f,
+            departure_region: f.destination_region,
+            destination_region: f.departure_region,
+          }))
         }
+        onClear={() => setFilters({})}
+        resultCount={total}
+        loading={loading}
       />
 
-      {showFilters && (
-        <div className="flex flex-col gap-2.5 border-b px-4 py-3" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
-          <Select
-            value={filters.departure_region ?? ""}
-            onChange={(e) => setFilters((f) => ({ ...f, departure_region: (e.target.value || undefined) as Region }))}
-          >
-            <option value="">Qayerdan (barchasi)</option>
-            {Object.entries(REGION_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
-          <Select
-            value={filters.destination_region ?? ""}
-            onChange={(e) => setFilters((f) => ({ ...f, destination_region: (e.target.value || undefined) as Region }))}
-          >
-            <option value="">Qayerga (barchasi)</option>
-            {Object.entries(REGION_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
-          <Select
-            value={filters.vehicle_type ?? ""}
-            onChange={(e) => setFilters((f) => ({ ...f, vehicle_type: (e.target.value || undefined) as VehicleType }))}
-          >
-            <option value="">Mashina turi (barchasi)</option>
-            {Object.entries(VEHICLE_TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                setFilters({});
-                load({});
-                setShowFilters(false);
-              }}
-              className="flex-1 rounded-xl px-4 py-2.5 text-[14px] font-medium"
-              style={{ background: "var(--tg-secondary-bg)", color: "var(--tg-hint)", border: "1px solid rgba(0,0,0,0.08)" }}
-            >
-              Tozalash
-            </button>
-            <button
-              onClick={() => {
-                load(filters);
-                setShowFilters(false);
-                hapticImpact("light");
-              }}
-              className="flex-1 rounded-xl px-4 py-2.5 text-[14px] font-medium"
-              style={{ background: "var(--tg-button)", color: "var(--tg-button-text)" }}
-            >
-              Qo'llash
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-col gap-3 p-4">
-        {loading && <FullPageSpinner />}
+        {loading && items.length === 0 && <FullPageSpinner />}
         {!loading && error && <ErrorState message={error} onRetry={() => load(filters)} />}
         {!loading && !error && items.length === 0 && (
           <EmptyState
             icon="🚛"
-            title="Hozircha bo'sh transport yo'q"
-            subtitle="Haydovchilar bo'sh joyini e'lon qilganda shu yerda ko'rinadi."
+            title="Bu yo'nalishda transport yo'q"
+            subtitle="Boshqa viloyatni tanlang yoki filtrni tozalab qayta ko'ring."
           />
         )}
-        {!loading && !error && items.map((offer) => <DriverOfferCard key={offer.id} offer={offer} />)}
+        {items.map((offer) => (
+          <DriverOfferCard key={offer.id} offer={offer} />
+        ))}
       </div>
 
       {user?.role === "driver" && (
